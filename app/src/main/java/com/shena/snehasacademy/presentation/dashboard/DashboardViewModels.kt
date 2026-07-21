@@ -1,0 +1,63 @@
+package com.shena.snehasacademy.presentation.dashboard
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.shena.snehasacademy.core.navigation.Route
+import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.repository.AcademyRepository
+import kotlinx.coroutines.launch
+
+class AdminDashboardViewModel(
+    private val repository: AcademyRepository = FirestoreAcademyRepository()
+) : ViewModel() {
+    var totalStudents by mutableStateOf(0)
+        private set
+    var totalCourses by mutableStateOf(0)
+        private set
+    var totalEnrollments by mutableStateOf(0)
+        private set
+    var totalCertificates by mutableStateOf(0)
+        private set
+
+    val menu = listOf(
+        Route.Students to "Students",
+        Route.Courses to "Courses",
+        Route.Enrollments to "Enrollments",
+        Route.Attendance to "Attendance",
+        Route.Fees to "Fee Management",
+        Route.Certificates to "Certificates",
+        Route.Settings to "Settings"
+    )
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                val students = repository.getStudents()
+                totalStudents = students.size
+                totalCourses = repository.getCourses().size
+                totalEnrollments = students.sumOf { it.enrollments.size }
+                totalCertificates = repository.getCertificates().size
+            } catch (e: Exception) {
+                // Leave stats at their last known values; the menu itself doesn't depend on this.
+            }
+        }
+    }
+}
+
+class StudentDashboardViewModel : ViewModel() {
+    val menu = listOf(
+        Route.StudentDashboard to "Home",
+        Route.Settings to "My Profile",
+        Route.Courses to "My Courses",
+        Route.Attendance to "Attendance",
+        Route.Fees to "Fee Status",
+        Route.Certificates to "Certificates"
+    )
+}

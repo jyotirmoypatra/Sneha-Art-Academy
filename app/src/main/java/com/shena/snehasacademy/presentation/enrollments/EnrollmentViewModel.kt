@@ -1,0 +1,108 @@
+package com.shena.snehasacademy.presentation.enrollments
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.model.Certificate
+import com.shena.snehasacademy.domain.model.Course
+import com.shena.snehasacademy.domain.model.CourseEnrollment
+import com.shena.snehasacademy.domain.model.Payment
+import com.shena.snehasacademy.domain.model.Student
+import com.shena.snehasacademy.domain.repository.AcademyRepository
+import kotlinx.coroutines.launch
+
+class EnrollmentViewModel(
+    private val repository: AcademyRepository = FirestoreAcademyRepository()
+) : ViewModel() {
+    var students by mutableStateOf<List<Student>>(emptyList())
+        private set
+    var courses by mutableStateOf<List<Course>>(emptyList())
+        private set
+    var isLoading by mutableStateOf(false)
+        private set
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                students = repository.getStudents()
+                courses = repository.getCourses()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't load data."
+            }
+            isLoading = false
+        }
+    }
+
+    suspend fun getStudent(studentId: String): Student? =
+        try {
+            repository.getStudent(studentId)
+        } catch (e: Exception) {
+            errorMessage = e.localizedMessage ?: "Couldn't load student."
+            null
+        }
+
+    fun createEnrollment(studentId: String, enrollment: CourseEnrollment, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.addEnrollment(studentId, enrollment)
+                onComplete()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't create enrollment."
+            }
+        }
+    }
+
+    fun updateEnrollment(studentId: String, enrollment: CourseEnrollment, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.updateEnrollment(studentId, enrollment)
+                onComplete()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't update enrollment."
+            }
+        }
+    }
+
+    fun addPayment(studentId: String, enrollmentId: String, payment: Payment, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.addPayment(studentId, enrollmentId, payment)
+                onComplete()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't add payment."
+            }
+        }
+    }
+
+    suspend fun getCertificate(enrollmentId: String): Certificate? =
+        try {
+            repository.getCertificate(enrollmentId)
+        } catch (e: Exception) {
+            errorMessage = e.localizedMessage ?: "Couldn't load certificate."
+            null
+        }
+
+    fun generateCertificate(studentId: String, enrollmentId: String, courseId: String, onComplete: (Certificate) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val createdBy = FirebaseAuth.getInstance().currentUser?.email ?: "Admin"
+                val certificate = repository.generateCertificate(studentId, enrollmentId, courseId, createdBy)
+                onComplete(certificate)
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't generate certificate."
+            }
+        }
+    }
+}

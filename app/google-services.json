@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "891291168207",
+    "project_id": "sneha-s-academy-3768a",
+    "storage_bucket": "sneha-s-academy-3768a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891291168207:android:2519d6e6a8f8e262af76ba",
+        "android_client_info": {
+          "package_name": "com.shena.snehasacademy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlyi6uc46oxw9EUXnr915VZW4j8q8SPos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
