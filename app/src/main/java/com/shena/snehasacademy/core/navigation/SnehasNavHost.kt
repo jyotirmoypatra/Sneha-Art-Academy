@@ -111,6 +111,7 @@ fun SnehasNavHost() {
                 onOpenEnrollment = { studentId, enrollmentId ->
                     navController.navigate(Route.EnrollmentDetails.createRoute(studentId, enrollmentId))
                 },
+                onEnrollNewCourse = { navController.navigate(Route.CreateEnrollment.path) },
                 onBack = { navController.popBackStack() }
             )
         }

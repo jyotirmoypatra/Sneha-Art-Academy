@@ -12,7 +12,8 @@ data class Student(
     val mobile: String = "",
     val address: String = "",
     val aadhaarNumber: String = "",
-    val joinDate: String = "",
+    // Set once, automatically, when the student is registered — epoch millis. Never edited afterward.
+    val registrationDate: Long = 0L,
     val enrollments: List<CourseEnrollment> = emptyList()
 )
 

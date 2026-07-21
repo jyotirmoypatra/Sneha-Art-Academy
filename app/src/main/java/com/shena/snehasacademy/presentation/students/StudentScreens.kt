@@ -1,16 +1,21 @@
 package com.shena.snehasacademy.presentation.students
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -23,14 +28,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.School
+import androidx.compose.material.icons.rounded.Spa
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Wc
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -45,6 +60,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,16 +76,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
 import com.shena.snehasacademy.core.components.EmptyState
-import com.shena.snehasacademy.core.components.LabeledInfo
 import com.shena.snehasacademy.core.components.LoadingView
 import com.shena.snehasacademy.core.components.ModernTextField
 import com.shena.snehasacademy.core.components.SectionCard
@@ -81,6 +98,7 @@ import com.shena.snehasacademy.core.components.ScreenScaffold
 import com.shena.snehasacademy.core.components.SearchBar
 import com.shena.snehasacademy.core.components.SecondaryButton
 import com.shena.snehasacademy.core.components.StatusBadge
+import com.shena.snehasacademy.core.components.statusColor
 import com.shena.snehasacademy.core.theme.AcademyGreen
 import com.shena.snehasacademy.core.theme.SnehasAcademyTheme
 import com.shena.snehasacademy.core.utils.MockData
@@ -92,11 +110,11 @@ import java.util.Date
 import java.util.Locale
 
 private val StudentFilterOptions = listOf("All", "Active", "Inactive")
+private val RegistrationDateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-private fun joinedThisMonth(joinDate: String): Boolean {
-    if (joinDate.isBlank()) return false
-    val parsed = runCatching { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(joinDate) }.getOrNull() ?: return false
-    val parsedCal = Calendar.getInstance().apply { time = parsed }
+private fun joinedThisMonth(registrationDate: Long): Boolean {
+    if (registrationDate <= 0L) return false
+    val parsedCal = Calendar.getInstance().apply { timeInMillis = registrationDate }
     val nowCal = Calendar.getInstance()
     return parsedCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR) &&
         parsedCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
@@ -106,12 +124,16 @@ private fun joinedThisMonth(joinDate: String): Boolean {
 @Composable
 fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, onOpenDetails: (String) -> Unit, onBack: () -> Unit) {
     val students = viewModel?.students ?: MockData.students
+    val orderedStudents = remember(students) {
+        // Newest registrations first; students without a registration date (legacy records) sink to the bottom.
+        students.sortedByDescending { it.registrationDate }
+    }
     var query by remember { mutableStateOf("") }
     var statusFilter by remember { mutableStateOf("All") }
     var showFilterMenu by remember { mutableStateOf(false) }
 
-    val statusFiltered = remember(statusFilter, students) {
-        if (statusFilter == "All") students else students.filter { it.status.equals(statusFilter, ignoreCase = true) }
+    val statusFiltered = remember(statusFilter, orderedStudents) {
+        if (statusFilter == "All") orderedStudents else orderedStudents.filter { it.status.equals(statusFilter, ignoreCase = true) }
     }
     val filtered = remember(query, statusFiltered) {
         if (query.isBlank()) {
@@ -126,7 +148,7 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
     val totalStudents = students.size
     val activeStudents = remember(students) { students.count { it.status.equals("Active", ignoreCase = true) } }
     val inactiveStudents = totalStudents - activeStudents
-    val newThisMonth = remember(students) { students.count { joinedThisMonth(it.joinDate) } }
+    val newThisMonth = remember(students) { students.count { joinedThisMonth(it.registrationDate) } }
 
     LifecycleResumeEffect(viewModel) {
         viewModel?.refresh()
@@ -171,7 +193,6 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(top = 14.dp, bottom = 90.dp)
             ) {
-                item { PrimaryButton("Register New Student", onAdd, leadingIcon = Icons.Rounded.PersonAdd) }
                 item { SearchBar(query, { query = it }, placeholder = "Search by name or ID...") }
                 item {
                     StudentStatsRow(
@@ -349,20 +370,23 @@ private fun StudentRowCard(student: Student, modifier: Modifier = Modifier, onCl
             ) {
                 Text(student.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(student.id, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (student.joinDate.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(
-                            Icons.Rounded.CalendarMonth,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            "Joined ${student.joinDate}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        Icons.Rounded.CalendarMonth,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    val joinedText = if (student.registrationDate > 0L) {
+                        RegistrationDateFormatter.format(Date(student.registrationDate))
+                    } else {
+                        "N/A"
                     }
+                    Text(
+                        "Joined: $joinedText",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
             StatusBadge(student.status, Modifier.padding(start = 8.dp))
@@ -427,7 +451,7 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                             address = address,
                             aadhaarNumber = aadhaarNumber,
                             status = "Active",
-                            joinDate = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
+                            registrationDate = System.currentTimeMillis()
                         )
                         if (viewModel != null) {
                             viewModel.addStudent(student) { onBack() }
@@ -524,6 +548,7 @@ fun StudentDetailsScreen(
     studentId: String,
     viewModel: StudentViewModel? = null,
     onOpenEnrollment: (String, String) -> Unit = { _, _ -> },
+    onEnrollNewCourse: () -> Unit = {},
     onBack: () -> Unit
 ) {
     var loadedStudent by remember(studentId) { mutableStateOf<Student?>(null) }
@@ -538,13 +563,14 @@ fun StudentDetailsScreen(
     }
 
     if (viewModel != null && isLoadingStudent && loadedStudent == null) {
-        ScreenScaffold("Student Details", true, onBack) { contentModifier ->
-            Box(contentModifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoadingView() }
+        Scaffold(topBar = { StudentDetailsHeader(onBack = onBack, onEditClick = {}) }) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { LoadingView() }
         }
         return
     }
 
     val student = loadedStudent ?: MockData.students.find { it.id == studentId } ?: MockData.students.first()
+    val courses = viewModel?.courses ?: MockData.courses
 
     fun parsedDobMillis() = runCatching { DobFormatter.parse(student.dateOfBirth)?.time }.getOrNull()
 
@@ -570,40 +596,17 @@ fun StudentDetailsScreen(
         aadhaarNumber = student.aadhaarNumber
     }
 
-    ScreenScaffold(
-        title = "Student Details",
-        canNavigateBack = true,
-        onBack = onBack,
-        actions = {
-            IconButton(onClick = { isEditing = !isEditing }, modifier = Modifier.size(28.dp)) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_edit),
-                    contentDescription = "Edit",
-                    tint = Color(0xFF4B260C),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    ) { contentModifier ->
+    Scaffold(
+        topBar = { StudentDetailsHeader(onBack = onBack, onEditClick = { isEditing = !isEditing }) }
+    ) { padding ->
         Column(
-            modifier = contentModifier
+            modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                fullName,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            SectionCard("Student ID") {
-                Text(student.id, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            }
-
             if (isEditing) {
                 StudentFormFields(
                     fullName = fullName, onFullNameChange = { fullName = it },
@@ -643,28 +646,56 @@ fun StudentDetailsScreen(
                     )
                 }
             } else {
-                SectionCard("Full Information") {
-                    LabeledInfo("Full Name", fullName)
-                    LabeledInfo("Father's / Guardian's Name", guardianName)
-                    LabeledInfo("Date of Birth", dateOfBirthDisplay)
-                    LabeledInfo("Gender", gender)
-                    LabeledInfo("Mobile Number", mobile)
-                    LabeledInfo("Address", address)
-                    LabeledInfo("Aadhaar Number", aadhaarNumber)
+                StudentProfileCard(student, fullName)
+
+                SectionContainer {
+                    SectionHeaderRow(Icons.Rounded.Person, Color(0xFFEAE4FA), Color(0xFF6C4FC1), "Personal Information")
+                    StudentInfoRow(Icons.Rounded.Person, "Full Name", fullName)
+                    StudentInfoRow(Icons.Rounded.Groups, "Father's / Guardian's Name", guardianName)
+                    StudentInfoRow(Icons.Rounded.CalendarMonth, "Date of Birth", dateOfBirthDisplay)
+                    StudentInfoRow(Icons.Rounded.Wc, "Gender", gender)
+                    StudentInfoRow(Icons.Rounded.Call, "Mobile Number", mobile)
+                    StudentInfoRow(Icons.Rounded.LocationOn, "Address", address)
+                    StudentInfoRow(Icons.Rounded.Badge, "Aadhaar Number", aadhaarNumber, showDivider = false)
                 }
 
-                SectionCard("Course Enrollments") {
+                SectionContainer {
+                    SectionHeaderRow(
+                        Icons.AutoMirrored.Rounded.MenuBook,
+                        Color(0xFFEAE4FA),
+                        Color(0xFF6C4FC1),
+                        "Course Enrollments"
+                    ) {
+                        Text(
+                            "+ Enroll",
+                            color = AcademyGreen,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.clickable(onClick = onEnrollNewCourse)
+                        )
+                    }
                     if (student.enrollments.isEmpty()) {
                         Text("No course enrollments yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         student.enrollments.forEach { enrollment ->
-                            EnrollmentSummaryRow(
-                                enrollment,
-                                onViewCertificate = { onOpenEnrollment(studentId, enrollment.id) }
-                            )
+                            val courseId = remember(enrollment.courseName, courses) {
+                                courses.find { it.title == enrollment.courseName }?.id.orEmpty()
+                            }
+
+                            Box(
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                CourseEnrollmentCard(
+                                    enrollment = enrollment,
+                                    courseId = courseId,
+                                    onViewCertificate = { onOpenEnrollment(studentId, enrollment.id) }
+                                )
+                            }
                         }
                     }
                 }
+
+                StudentContactActions(mobile)
             }
         }
     }
@@ -689,41 +720,266 @@ fun StudentDetailsScreen(
 }
 
 @Composable
-private fun EnrollmentSummaryRow(enrollment: CourseEnrollment, onViewCertificate: () -> Unit) {
-    val paymentStatus = if (enrollment.fees > 0 && enrollment.amountPaid >= enrollment.fees) "Paid" else "Due"
+private fun StudentDetailsHeader(onBack: () -> Unit, onEditClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF7E8))
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_back),
+                contentDescription = "Back",
+                tint = Color(0xFF4B260C),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "Student Details",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF4B260C)
+            )
+            Text(
+                "View and manage student information",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF7A4A24)
+            )
+        }
+        IconButton(
+            onClick = onEditClick,
+            modifier = Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_edit),
+                contentDescription = "Edit",
+                tint = Color(0xFF4B260C),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun StudentProfileCard(student: Student, fullName: String) {
+    val initials = remember(fullName) {
+        fullName.trim().split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1) }.uppercase()
+    }
+    val accent = statusColor(student.status)
+    val joinedText = if (student.registrationDate > 0L) {
+        RegistrationDateFormatter.format(Date(student.registrationDate))
+    } else {
+        "N/A"
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                enrollment.courseName,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box {
+                    Box(
+                        modifier = Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFDCF3E1)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(initials, color = AcademyGreen, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(accent)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(11.dp))
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(Modifier.size(7.dp).clip(CircleShape).background(accent))
+                        Text(
+                            "${student.status.ifBlank { "Active" }} Student",
+                            color = accent,
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Row(Modifier.fillMaxWidth()) {
+                ProfileMetaItem(Icons.Rounded.School, "Student ID", student.id, Modifier.weight(1f))
+                VerticalDivider(modifier = Modifier.height(34.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                ProfileMetaItem(Icons.Rounded.CalendarMonth, "Joined On", joinedText, Modifier.weight(1f).padding(start = 10.dp))
+            }
+        }
+    }
+}
 
-            EnrollmentDetailRow("Status") { StatusBadge(enrollment.status) }
-            EnrollmentDetailRow("Fee Status") { StatusBadge(paymentStatus) }
-            EnrollmentDetailRow("Certificate Status") {
+@Composable
+private fun ProfileMetaItem(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            modifier = Modifier.size(26.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCF3E1)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(13.dp))
+        }
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(
+                value,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionContainer(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
+    }
+}
+
+@Composable
+private fun SectionHeaderRow(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    trailing: @Composable () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(30.dp).clip(CircleShape).background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(15.dp))
+        }
+        Text(
+            title,
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+        trailing()
+    }
+}
+
+@Composable
+private fun StudentInfoRow(icon: ImageVector, label: String, value: String, showDivider: Boolean = true) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCF3E1)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(14.dp))
+        }
+        Text(
+            label,
+            modifier = Modifier.padding(start = 8.dp).weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+    if (showDivider) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+    }
+}
+
+@Composable
+private fun CourseEnrollmentCard(enrollment: CourseEnrollment, courseId: String, onViewCertificate: () -> Unit) {
+    val paymentStatus = if (enrollment.fees > 0 && enrollment.amountPaid >= enrollment.fees) "Paid" else "Due"
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAE4FA).copy(alpha = 0.45f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEAE4FA)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.Spa, contentDescription = null, tint = Color(0xFF6C4FC1), modifier = Modifier.size(18.dp))
+                }
+                Column(Modifier.weight(1f).padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(enrollment.courseName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                    if (courseId.isNotBlank()) {
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(Color(0xFF6C4FC1).copy(alpha = 0.14f))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                "Course ID: $courseId",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF6C4FC1),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            EnrollmentMetaRow(Icons.Rounded.CalendarMonth, "Enrollment Date") {
+                Text(enrollment.enrollmentDate, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            }
+            EnrollmentMetaRow(Icons.Rounded.Star, "Status") { StatusBadge(enrollment.status) }
+            EnrollmentMetaRow(Icons.Rounded.Payments, "Fee Status") { StatusBadge(paymentStatus) }
+            EnrollmentMetaRow(Icons.Rounded.WorkspacePremium, "Certificate Status") {
                 if (enrollment.certificateId.isNotBlank()) {
-                    Text(
-                        "View Certificate",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AcademyGreen,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable(onClick = onViewCertificate)
-                    )
+                    ) {
+                        Text("View Certificate", color = AcademyGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = AcademyGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 } else {
-                    Text(
-                        "Not Generated",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Not Generated", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -731,19 +987,86 @@ private fun EnrollmentSummaryRow(enrollment: CourseEnrollment, onViewCertificate
 }
 
 @Composable
-private fun EnrollmentDetailRow(label: String, value: @Composable () -> Unit) {
+private fun EnrollmentMetaRow(icon: ImageVector, label: String, value: @Composable () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         value()
+    }
+}
+
+@Composable
+private fun StudentContactActions(mobile: String) {
+    val context = LocalContext.current
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        ContactActionButton(
+            icon = Icons.AutoMirrored.Rounded.Chat,
+            label = "Message on WhatsApp",
+            containerColor = Color(0xFFDCF3E1),
+            contentColor = AcademyGreen,
+            modifier = Modifier.weight(1f),
+            onClick = {
+                val digits = mobile.filter { it.isDigit() }
+                if (digits.isNotBlank()) {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$digits")))
+                    }
+                }
+            }
+        )
+        ContactActionButton(
+            icon = Icons.Rounded.Call,
+            label = "Call Student",
+            containerColor = Color(0xFFDCEAFB),
+            contentColor = Color(0xFF2E6FD9),
+            modifier = Modifier.weight(1f),
+            onClick = {
+                if (mobile.isNotBlank()) {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$mobile")))
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun ContactActionButton(
+    icon: ImageVector,
+    label: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 14.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                label,
+                color = contentColor,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 

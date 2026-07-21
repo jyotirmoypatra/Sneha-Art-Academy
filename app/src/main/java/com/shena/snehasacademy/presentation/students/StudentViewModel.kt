@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.model.Course
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import kotlinx.coroutines.launch
@@ -14,6 +15,8 @@ class StudentViewModel(
     private val repository: AcademyRepository = FirestoreAcademyRepository()
 ) : ViewModel() {
     var students by mutableStateOf<List<Student>>(emptyList())
+        private set
+    var courses by mutableStateOf<List<Course>>(emptyList())
         private set
     var isLoading by mutableStateOf(false)
         private set
@@ -30,6 +33,7 @@ class StudentViewModel(
             errorMessage = null
             try {
                 students = repository.getStudents()
+                courses = repository.getCourses()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't load students."
             }
