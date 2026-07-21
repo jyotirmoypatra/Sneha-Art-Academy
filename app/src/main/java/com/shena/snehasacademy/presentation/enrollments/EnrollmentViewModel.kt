@@ -27,6 +27,8 @@ class EnrollmentViewModel(
         private set
     var isSavingEnrollment by mutableStateOf(false)
         private set
+    var isDeletingEnrollment by mutableStateOf(false)
+        private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
@@ -81,6 +83,22 @@ class EnrollmentViewModel(
                 onComplete()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't update enrollment."
+            }
+        }
+    }
+
+    fun deleteEnrollment(studentId: String, enrollmentId: String, onComplete: () -> Unit) {
+        if (isDeletingEnrollment) return
+        isDeletingEnrollment = true
+        errorMessage = null
+        viewModelScope.launch {
+            try {
+                repository.deleteEnrollment(studentId, enrollmentId)
+                onComplete()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't delete enrollment."
+            } finally {
+                isDeletingEnrollment = false
             }
         }
     }

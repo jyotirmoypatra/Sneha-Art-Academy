@@ -25,6 +25,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -465,6 +467,8 @@ fun EnrollmentDetailsScreen(
     var isEditingStatus by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showCompletedConfirmation by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val isDeleting = viewModel?.isDeletingEnrollment == true
 
     var courseName by remember(enrollment.id) { mutableStateOf(enrollment.courseName) }
     var status by remember(enrollment.id) { mutableStateOf(enrollment.status) }
@@ -500,7 +504,25 @@ fun EnrollmentDetailsScreen(
         }
     }
 
-    ScreenScaffold(title = "Enrollment Details", canNavigateBack = true, onBack = onBack) { contentModifier ->
+    ScreenScaffold(
+        title = "Enrollment Details",
+        canNavigateBack = true,
+        onBack = onBack,
+        actions = {
+            IconButton(
+                onClick = { showDeleteConfirmation = true },
+                enabled = !isDeleting,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete Enrollment",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    ) { contentModifier ->
         Column(
             modifier = contentModifier
                 .fillMaxSize()
@@ -652,6 +674,33 @@ fun EnrollmentDetailsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCompletedConfirmation = false }) { Text("No") }
+            }
+        )
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { if (!isDeleting) showDeleteConfirmation = false },
+            title = { Text("Delete Enrollment") },
+            text = { Text("Are you sure you want to delete this enrollment? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    enabled = !isDeleting,
+                    onClick = {
+                        if (viewModel != null) {
+                            viewModel.deleteEnrollment(studentId, enrollment.id) {
+                                showDeleteConfirmation = false
+                                onBack()
+                            }
+                        } else {
+                            showDeleteConfirmation = false
+                            onBack()
+                        }
+                    }
+                ) { Text(if (isDeleting) "Deleting..." else "Delete") }
+            },
+            dismissButton = {
+                TextButton(enabled = !isDeleting, onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
             }
         )
     }

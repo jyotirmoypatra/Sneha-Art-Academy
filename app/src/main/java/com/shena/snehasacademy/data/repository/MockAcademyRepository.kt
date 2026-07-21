@@ -31,10 +31,12 @@ class MockAcademyRepository : AcademyRepository {
         }
     }
     override suspend fun updateEnrollment(studentId: String, enrollment: CourseEnrollment) = Unit
+    override suspend fun deleteEnrollment(studentId: String, enrollmentId: String) = Unit
     override suspend fun addPayment(studentId: String, enrollmentId: String, payment: Payment) = Unit
 
     override suspend fun getCertificates(): List<Certificate> = emptyList()
     override suspend fun getCertificate(enrollmentId: String): Certificate? = null
+    override suspend fun deleteCertificate(enrollmentId: String) = Unit
     override suspend fun generateCertificate(
         studentId: String,
         enrollmentId: String,

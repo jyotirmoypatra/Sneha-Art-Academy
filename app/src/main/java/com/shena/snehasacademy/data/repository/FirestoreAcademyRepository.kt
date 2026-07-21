@@ -109,6 +109,13 @@ class FirestoreAcademyRepository(
         updateStudent(student.copy(enrollments = updatedEnrollments))
     }
 
+    override suspend fun deleteEnrollment(studentId: String, enrollmentId: String) {
+        val student = getStudent(studentId) ?: return
+        val updatedEnrollments = student.enrollments.filterNot { it.id == enrollmentId }
+        updateStudent(student.copy(enrollments = updatedEnrollments))
+        deleteCertificate(enrollmentId)
+    }
+
     override suspend fun addPayment(studentId: String, enrollmentId: String, payment: Payment) {
         val student = getStudent(studentId) ?: return
         val updatedEnrollments = student.enrollments.map { enrollment ->
@@ -157,6 +164,11 @@ class FirestoreAcademyRepository(
         }
 
         return certificate
+    }
+
+    override suspend fun deleteCertificate(enrollmentId: String) {
+        certificatesRef.whereEqualTo("enrollmentId", enrollmentId).get().await()
+            .documents.forEach { it.reference.delete().await() }
     }
 
     /**

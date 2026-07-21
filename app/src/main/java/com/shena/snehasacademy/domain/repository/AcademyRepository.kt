@@ -22,9 +22,11 @@ interface AcademyRepository {
 
     suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment)
     suspend fun updateEnrollment(studentId: String, enrollment: CourseEnrollment)
+    suspend fun deleteEnrollment(studentId: String, enrollmentId: String)
     suspend fun addPayment(studentId: String, enrollmentId: String, payment: Payment)
 
     suspend fun getCertificates(): List<Certificate>
     suspend fun getCertificate(enrollmentId: String): Certificate?
     suspend fun generateCertificate(studentId: String, enrollmentId: String, courseId: String, createdBy: String): Certificate
+    suspend fun deleteCertificate(enrollmentId: String)
 }
