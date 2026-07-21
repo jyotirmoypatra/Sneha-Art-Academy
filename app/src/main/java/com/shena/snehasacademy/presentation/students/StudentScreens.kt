@@ -91,7 +91,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
 import com.shena.snehasacademy.core.components.EmptyState
+import com.shena.snehasacademy.core.components.FormFieldIconBox
+import com.shena.snehasacademy.core.components.FormIconField
+import com.shena.snehasacademy.core.components.FormSectionCard
+import com.shena.snehasacademy.core.components.HeaderIconBadge
 import com.shena.snehasacademy.core.components.LoadingView
+import com.shena.snehasacademy.core.components.SelectablePill
+import com.shena.snehasacademy.core.components.SubtitledHeader
 import com.shena.snehasacademy.core.components.academyTextFieldColors
 import com.shena.snehasacademy.core.components.PrimaryButton
 import com.shena.snehasacademy.core.components.SearchBar
@@ -233,62 +239,30 @@ private fun StudentsHeader(
     selectedFilter: String,
     onSelectFilter: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFF7E8))
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+    SubtitledHeader(
+        title = "All Students",
+        subtitle = "Manage all academy students",
+        onBack = onBack
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Back",
-                    tint = Color(0xFF4B260C),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "All Students",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF4B260C)
-                )
-                Text(
-                    "Manage all academy students",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF7A4A24)
-                )
-            }
-            Box {
-                IconButton(
-                    onClick = onFilterClick,
-                    modifier = Modifier
-                        .size(35.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
-                ) {
-                    Icon(
-                        Icons.Rounded.FilterAlt,
-                        contentDescription = "Filter students",
-                        tint = AcademyGreen,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                DropdownMenu(expanded = showFilterMenu, onDismissRequest = onDismissFilterMenu) {
-                    StudentFilterOptions.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = { onSelectFilter(option) },
-                            trailingIcon = {
-                                if (option == selectedFilter) {
-                                    Icon(Icons.Rounded.Check, contentDescription = null, tint = AcademyGreen)
-                                }
+        Box {
+            HeaderIconBadge(
+                icon = Icons.Rounded.FilterAlt,
+                tint = AcademyGreen,
+                background = Color.White,
+                contentDescription = "Filter students",
+                onClick = onFilterClick
+            )
+            DropdownMenu(expanded = showFilterMenu, onDismissRequest = onDismissFilterMenu) {
+                StudentFilterOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = { onSelectFilter(option) },
+                        trailingIcon = {
+                            if (option == selectedFilter) {
+                                Icon(Icons.Rounded.Check, contentDescription = null, tint = AcademyGreen)
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }
@@ -496,41 +470,12 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
 
 @Composable
 private fun StudentFormHeader(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFF7E8))
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    SubtitledHeader(
+        title = "Student Registration",
+        subtitle = "Enter student information",
+        onBack = onBack
     ) {
-        IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_back),
-                contentDescription = "Back",
-                tint = Color(0xFF4B260C),
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "Student Registration",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF4B260C)
-            )
-            Text(
-                "Enter student information",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF7A4A24)
-            )
-        }
-        Box(
-            modifier = Modifier.size(35.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFDCF3E1)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Rounded.School, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(18.dp))
-        }
+        HeaderIconBadge(icon = Icons.Rounded.School, tint = AcademyGreen, background = Color(0xFFDCF3E1))
     }
 }
 
@@ -603,72 +548,6 @@ private fun StudentFormFields(
 }
 
 @Composable
-private fun FormSectionCard(
-    icon: ImageVector,
-    iconBg: Color,
-    iconTint: Color,
-    title: String,
-    subtitle: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(CircleShape).background(iconBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
-                    }
-                    Column {
-                        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Spacer(Modifier.height(10.dp))
-                Box(Modifier.width(56.dp).height(2.dp).clip(RoundedCornerShape(1.dp)).background(iconTint))
-            }
-            content()
-        }
-    }
-}
-
-@Composable
-private fun FormIconField(
-    icon: ImageVector,
-    iconBg: Color,
-    iconTint: Color,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    minLines: Int = 1,
-    maxLines: Int = 1
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = { Text(placeholder, style = MaterialTheme.typography.bodySmall) },
-        textStyle = MaterialTheme.typography.bodySmall,
-        leadingIcon = { FormFieldIconBox(icon, iconBg, iconTint) },
-        singleLine = maxLines <= 1,
-        minLines = minLines,
-        maxLines = maxLines,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        shape = RoundedCornerShape(14.dp),
-        colors = academyTextFieldColors(),
-        modifier = modifier.fillMaxWidth()
-    )
-}
-
-@Composable
 private fun FormDateField(icon: ImageVector, iconBg: Color, iconTint: Color, dateMillis: Long?, onClick: () -> Unit) {
     val formatted = remember(dateMillis) {
         dateMillis?.let { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(it)) }.orEmpty()
@@ -708,16 +587,6 @@ private fun FormDateField(icon: ImageVector, iconBg: Color, iconTint: Color, dat
 }
 
 @Composable
-private fun FormFieldIconBox(icon: ImageVector, iconBg: Color, iconTint: Color) {
-    Box(
-        modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(iconBg),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
-    }
-}
-
-@Composable
 private fun GenderSelector(selected: String, onSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -727,44 +596,9 @@ private fun GenderSelector(selected: String, onSelect: (String) -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            GenderOption(Icons.Rounded.Male, "Male", selected == "Male", BasicInfoAccent, Modifier.weight(1f)) { onSelect("Male") }
-            GenderOption(Icons.Rounded.Female, "Female", selected == "Female", Color(0xFFD6336C), Modifier.weight(1f)) { onSelect("Female") }
-            GenderOption(Icons.Rounded.Groups, "Other", selected == "Other", AcademyGreen, Modifier.weight(1f)) { onSelect("Other") }
-        }
-    }
-}
-
-@Composable
-private fun GenderOption(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    accent: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (selected) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
-            .border(1.dp, if (selected) accent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(15.dp)
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                color = if (selected) accent else MaterialTheme.colorScheme.onSurface
-            )
+            SelectablePill("Male", selected == "Male", BasicInfoAccent, Modifier.weight(1f), Icons.Rounded.Male) { onSelect("Male") }
+            SelectablePill("Female", selected == "Female", Color(0xFFD6336C), Modifier.weight(1f), Icons.Rounded.Female) { onSelect("Female") }
+            SelectablePill("Other", selected == "Other", AcademyGreen, Modifier.weight(1f), Icons.Rounded.Groups) { onSelect("Other") }
         }
     }
 }
@@ -961,49 +795,18 @@ fun StudentDetailsScreen(
 
 @Composable
 private fun StudentDetailsHeader(isEditing: Boolean, onBack: () -> Unit, onEditClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFFF7E8))
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    SubtitledHeader(
+        title = if (isEditing) "Edit Student Details" else "Student Details",
+        subtitle = "View and manage student information",
+        onBack = onBack
     ) {
-        IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_back),
-                contentDescription = "Back",
-                tint = Color(0xFF4B260C),
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                if (isEditing) "Edit Student Details" else "Student Details",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF4B260C)
-            )
-            Text(
-                "View and manage student information",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF7A4A24)
-            )
-        }
-        IconButton(
-            onClick = onEditClick,
-            modifier = Modifier
-                .size(35.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color.White)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_edit),
-                contentDescription = "Edit",
-                tint = Color(0xFF4B260C),
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        HeaderIconBadge(
+            painter = painterResource(id = R.drawable.ic_edit),
+            tint = Color(0xFF4B260C),
+            background = Color.White,
+            contentDescription = "Edit",
+            onClick = onEditClick
+        )
     }
 }
 

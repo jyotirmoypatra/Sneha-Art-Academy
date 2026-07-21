@@ -17,6 +17,8 @@ class CourseViewModel(
         private set
     var isLoading by mutableStateOf(false)
         private set
+    var isSaving by mutableStateOf(false)
+        private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
@@ -38,12 +40,17 @@ class CourseViewModel(
     }
 
     fun addCourse(course: Course, onComplete: () -> Unit) {
+        if (isSaving) return
+        isSaving = true
+        errorMessage = null
         viewModelScope.launch {
             try {
                 repository.addCourse(course)
                 onComplete()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't save course."
+            } finally {
+                isSaving = false
             }
         }
     }
@@ -57,12 +64,17 @@ class CourseViewModel(
         }
 
     fun updateCourse(course: Course, onComplete: () -> Unit) {
+        if (isSaving) return
+        isSaving = true
+        errorMessage = null
         viewModelScope.launch {
             try {
                 repository.updateCourse(course)
                 onComplete()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't update course."
+            } finally {
+                isSaving = false
             }
         }
     }

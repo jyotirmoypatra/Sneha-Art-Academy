@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -728,6 +729,200 @@ fun MehendiMark(modifier: Modifier = Modifier) {
             drawLine(AcademyNavy.copy(alpha = 0.55f), center, end, strokeWidth = 2.5f, cap = StrokeCap.Round)
         }
         drawCircle(AcademyGreen, radius = size.minDimension * 0.39f, style = Stroke(width = 2.5f))
+    }
+}
+
+/**
+ * Shared header for "list" and "details/registration" screens that need a subtitle line under
+ * the title plus a single action slot on the right (filter, edit, or a decorative badge) — used
+ * so every such screen has byte-identical padding/typography instead of each screen re-deriving it.
+ */
+@Composable
+fun SubtitledHeader(
+    title: String,
+    subtitle: String,
+    onBack: () -> Unit,
+    action: @Composable () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF7E8))
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_back),
+                contentDescription = "Back",
+                tint = Color(0xFF4B260C),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color(0xFF4B260C))
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF7A4A24))
+        }
+        action()
+    }
+}
+
+/** The small rounded-square icon box used on the right side of [SubtitledHeader] (filter/edit/badge). */
+@Composable
+fun HeaderIconBadge(
+    icon: ImageVector,
+    tint: Color,
+    background: Color,
+    contentDescription: String? = null,
+    onClick: (() -> Unit)? = null
+) {
+    Box(
+        modifier = Modifier
+            .size(35.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(background)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(18.dp))
+    }
+}
+
+/** [HeaderIconBadge] overload for drawable-resource icons (e.g. the custom edit pencil). */
+@Composable
+fun HeaderIconBadge(
+    painter: Painter,
+    tint: Color,
+    background: Color,
+    contentDescription: String? = null,
+    onClick: (() -> Unit)? = null
+) {
+    Box(
+        modifier = Modifier
+            .size(35.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(background)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(painter = painter, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(18.dp))
+    }
+}
+
+/** A form section with an icon-badge header, bold title + gray subtitle, and a colored accent underline. */
+@Composable
+fun FormSectionCard(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(
+                        modifier = Modifier.size(36.dp).clip(CircleShape).background(iconBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+                    }
+                    Column {
+                        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Box(Modifier.width(56.dp).height(2.dp).clip(RoundedCornerShape(1.dp)).background(iconTint))
+            }
+            content()
+        }
+    }
+}
+
+/** The small colored icon square used as the leading icon inside [FormIconField]/date fields. */
+@Composable
+fun FormFieldIconBox(icon: ImageVector, iconBg: Color, iconTint: Color) {
+    Box(
+        modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(iconBg),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
+    }
+}
+
+@Composable
+fun FormIconField(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    minLines: Int = 1,
+    maxLines: Int = 1
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text(placeholder, style = MaterialTheme.typography.bodySmall) },
+        textStyle = MaterialTheme.typography.bodySmall,
+        leadingIcon = { FormFieldIconBox(icon, iconBg, iconTint) },
+        singleLine = maxLines <= 1,
+        minLines = minLines,
+        maxLines = maxLines,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(14.dp),
+        colors = academyTextFieldColors(),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/** A single pill option for a 2-4 way choice row (e.g. gender, course level) — tinted + bold when selected. */
+@Composable
+fun SelectablePill(
+    label: String,
+    selected: Boolean,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (selected) accent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (icon != null) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) accent else MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
