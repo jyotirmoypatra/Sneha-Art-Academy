@@ -90,12 +90,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
+import com.shena.snehasacademy.core.components.CheckBadgedAvatar
+import com.shena.snehasacademy.core.components.DetailInfoRow
+import com.shena.snehasacademy.core.components.DetailSectionContainer
+import com.shena.snehasacademy.core.components.DetailSectionHeaderRow
 import com.shena.snehasacademy.core.components.EmptyState
 import com.shena.snehasacademy.core.components.FormFieldIconBox
 import com.shena.snehasacademy.core.components.FormIconField
 import com.shena.snehasacademy.core.components.FormSectionCard
 import com.shena.snehasacademy.core.components.HeaderIconBadge
 import com.shena.snehasacademy.core.components.LoadingView
+import com.shena.snehasacademy.core.components.ProfileMetaItem
+import com.shena.snehasacademy.core.components.ProfileSummaryCard
 import com.shena.snehasacademy.core.components.SelectablePill
 import com.shena.snehasacademy.core.components.SubtitledHeader
 import com.shena.snehasacademy.core.components.academyTextFieldColors
@@ -722,19 +728,19 @@ fun StudentDetailsScreen(
             } else {
                 StudentProfileCard(student, fullName)
 
-                SectionContainer {
-                    SectionHeaderRow(Icons.Rounded.Person, Color(0xFFEAE4FA), Color(0xFF6C4FC1), "Personal Information")
-                    StudentInfoRow(Icons.Rounded.Person, "Full Name", fullName)
-                    StudentInfoRow(Icons.Rounded.Groups, "Father's / Guardian's Name", guardianName)
-                    StudentInfoRow(Icons.Rounded.CalendarMonth, "Date of Birth", dateOfBirthDisplay)
-                    StudentInfoRow(Icons.Rounded.Wc, "Gender", gender)
-                    StudentInfoRow(Icons.Rounded.Call, "Mobile Number", mobile)
-                    StudentInfoRow(Icons.Rounded.LocationOn, "Address", address)
-                    StudentInfoRow(Icons.Rounded.Badge, "Aadhaar Number", aadhaarNumber, showDivider = false)
+                DetailSectionContainer {
+                    DetailSectionHeaderRow(Icons.Rounded.Person, Color(0xFFEAE4FA), Color(0xFF6C4FC1), "Personal Information")
+                    DetailInfoRow(Icons.Rounded.Person, "Full Name", fullName)
+                    DetailInfoRow(Icons.Rounded.Groups, "Father's / Guardian's Name", guardianName)
+                    DetailInfoRow(Icons.Rounded.CalendarMonth, "Date of Birth", dateOfBirthDisplay)
+                    DetailInfoRow(Icons.Rounded.Wc, "Gender", gender)
+                    DetailInfoRow(Icons.Rounded.Call, "Mobile Number", mobile)
+                    DetailInfoRow(Icons.Rounded.LocationOn, "Address", address)
+                    DetailInfoRow(Icons.Rounded.Badge, "Aadhaar Number", aadhaarNumber, showDivider = false)
                 }
 
-                SectionContainer {
-                    SectionHeaderRow(
+                DetailSectionContainer {
+                    DetailSectionHeaderRow(
                         Icons.AutoMirrored.Rounded.MenuBook,
                         Color(0xFFEAE4FA),
                         Color(0xFF6C4FC1),
@@ -822,146 +828,22 @@ private fun StudentProfileCard(student: Student, fullName: String) {
         "N/A"
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Box {
-                    Box(
-                        modifier = Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFDCF3E1)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(initials, color = AcademyGreen, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(accent)
-                            .border(2.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(11.dp))
-                    }
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(fullName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(Modifier.size(7.dp).clip(CircleShape).background(accent))
-                        Text(
-                            "${student.status.ifBlank { "Active" }} Student",
-                            color = accent,
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(Modifier.fillMaxWidth()) {
-                ProfileMetaItem(Icons.Rounded.School, "Student ID", student.id, Modifier.weight(1f))
-                VerticalDivider(modifier = Modifier.height(34.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                ProfileMetaItem(Icons.Rounded.CalendarMonth, "Joined On", joinedText, Modifier.weight(1f).padding(start = 10.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileMetaItem(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Box(
-            modifier = Modifier.size(26.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCF3E1)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(13.dp))
-        }
-        Column {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            Text(
-                value,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+    ProfileSummaryCard(
+        avatar = {
+            CheckBadgedAvatar(
+                initialsOrIcon = {
+                    Text(initials, color = AcademyGreen, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
+                },
+                badgeColor = accent
             )
-        }
-    }
-}
-
-@Composable
-private fun SectionContainer(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        },
+        title = fullName,
+        tagText = "${student.status.ifBlank { "Active" }} Student",
+        tagColor = accent
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
-    }
-}
-
-@Composable
-private fun SectionHeaderRow(
-    icon: ImageVector,
-    iconBg: Color,
-    iconTint: Color,
-    title: String,
-    trailing: @Composable () -> Unit = {}
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(30.dp).clip(CircleShape).background(iconBg),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(15.dp))
-        }
-        Text(
-            title,
-            modifier = Modifier.weight(1f).padding(start = 8.dp),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold
-        )
-        trailing()
-    }
-}
-
-@Composable
-private fun StudentInfoRow(icon: ImageVector, label: String, value: String, showDivider: Boolean = true) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCF3E1)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(14.dp))
-        }
-        Text(
-            label,
-            modifier = Modifier.padding(start = 8.dp).weight(1f),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End,
-            modifier = Modifier.weight(1f)
-        )
-    }
-    if (showDivider) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+        ProfileMetaItem(Icons.Rounded.School, "Student ID", student.id, Modifier.weight(1f))
+        VerticalDivider(modifier = Modifier.height(34.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        ProfileMetaItem(Icons.Rounded.CalendarMonth, "Joined On", joinedText, Modifier.weight(1f).padding(start = 10.dp))
     }
 }
 

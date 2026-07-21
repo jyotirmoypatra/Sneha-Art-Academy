@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,10 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -34,6 +37,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,16 +58,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
+import com.shena.snehasacademy.core.components.DetailInfoRow
+import com.shena.snehasacademy.core.components.DetailSectionContainer
+import com.shena.snehasacademy.core.components.DetailSectionHeaderRow
 import com.shena.snehasacademy.core.components.EmptyState
 import com.shena.snehasacademy.core.components.FormSectionCard
 import com.shena.snehasacademy.core.components.FormIconField
 import com.shena.snehasacademy.core.components.HeaderIconBadge
-import com.shena.snehasacademy.core.components.LabeledInfo
 import com.shena.snehasacademy.core.components.LoadingView
 import com.shena.snehasacademy.core.components.PrimaryButton
+import com.shena.snehasacademy.core.components.ProfileMetaItem
+import com.shena.snehasacademy.core.components.ProfileSummaryCard
 import com.shena.snehasacademy.core.components.SearchBar
 import com.shena.snehasacademy.core.components.SecondaryButton
-import com.shena.snehasacademy.core.components.SectionCard
 import com.shena.snehasacademy.core.components.SelectablePill
 import com.shena.snehasacademy.core.components.SubtitledHeader
 import com.shena.snehasacademy.core.theme.AcademyGreen
@@ -118,7 +125,7 @@ fun CourseListScreen(
 
     Scaffold(
         topBar = {
-            SubtitledHeader(title = "Courses", subtitle = "Manage all academy courses", onBack = onBack) {
+            SubtitledHeader(title = "All Courses", subtitle = "Manage all academy courses", onBack = onBack) {
                 Box {
                     HeaderIconBadge(
                         icon = Icons.Rounded.FilterAlt,
@@ -244,6 +251,41 @@ private val CourseInfoAccent = Color(0xFF6C4FC1)
 private val CourseInfoBg = Color(0xFFEAE4FA)
 private val PricingAccent = AcademyGreen
 private val PricingBg = Color(0xFFDCF3E1)
+
+private fun courseLevelColor(level: String): Color = when (level.trim().lowercase()) {
+    "beginner" -> AcademyGreen
+    "intermediate" -> Color(0xFFD97706)
+    "advanced" -> Color(0xFF6C4FC1)
+    else -> Color(0xFF2E6FD9)
+}
+
+@Composable
+private fun CourseProfileCard(course: Course, duration: String) {
+    val accent = courseLevelColor(course.level)
+    ProfileSummaryCard(
+        avatar = {
+            Box(
+                modifier = Modifier.size(68.dp).clip(CircleShape).background(CourseInfoBg),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null, tint = CourseInfoAccent, modifier = Modifier.size(30.dp))
+            }
+        },
+        title = course.title,
+        tagText = "${course.level.ifBlank { "Beginner" }} Level",
+        tagColor = accent
+    ) {
+        ProfileMetaItem(
+            Icons.Rounded.Badge, "Course ID", course.id, Modifier.weight(1f),
+            iconBg = CourseInfoBg, iconTint = CourseInfoAccent
+        )
+        VerticalDivider(modifier = Modifier.height(34.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        ProfileMetaItem(
+            Icons.Rounded.Schedule, "Duration", duration.ifBlank { "—" }, Modifier.weight(1f).padding(start = 10.dp),
+            iconBg = PricingBg, iconTint = PricingAccent
+        )
+    }
+}
 
 @Composable
 private fun CourseFormHeader(
@@ -482,14 +524,22 @@ fun CourseDetailsScreen(courseId: String, viewModel: CourseViewModel? = null, on
                     )
                 }
             } else {
-                SectionCard("Course ID") {
-                    Text(course.id, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                }
+                CourseProfileCard(course, duration)
 
-                SectionCard("Course Details") {
-                    LabeledInfo("Duration", duration.ifBlank { "—" })
-                    LabeledInfo("Level", level)
-                    LabeledInfo("Course Fees", "₹${course.fees}")
+                DetailSectionContainer {
+                    DetailSectionHeaderRow(Icons.Rounded.Payments, PricingBg, PricingAccent, "Course Details")
+                    DetailInfoRow(
+                        Icons.Rounded.Schedule, "Duration", duration.ifBlank { "—" },
+                        iconBg = CourseInfoBg, iconTint = CourseInfoAccent
+                    )
+                    DetailInfoRow(
+                        Icons.Rounded.Star, "Level", level.ifBlank { "—" },
+                        iconBg = CourseInfoBg, iconTint = CourseInfoAccent
+                    )
+                    DetailInfoRow(
+                        Icons.Rounded.Payments, "Course Fees", "₹${course.fees}",
+                        iconBg = PricingBg, iconTint = PricingAccent, showDivider = false
+                    )
                 }
             }
         }

@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,6 +37,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -922,6 +924,176 @@ fun SelectablePill(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 color = if (selected) accent else MaterialTheme.colorScheme.onSurface
             )
+        }
+    }
+}
+
+/** A white rounded card wrapping a "details" section (used below a [ProfileSummaryCard]). */
+@Composable
+fun DetailSectionContainer(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
+    }
+}
+
+/** The icon-badge + bold title header at the top of a [DetailSectionContainer], with an optional trailing action. */
+@Composable
+fun DetailSectionHeaderRow(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    trailing: @Composable () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(30.dp).clip(CircleShape).background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(15.dp))
+        }
+        Text(
+            title,
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+        trailing()
+    }
+}
+
+/** A "icon | label ..... value" row inside a [DetailSectionContainer], with an optional bottom divider. */
+@Composable
+fun DetailInfoRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    iconBg: Color = AcademyGreen.copy(alpha = 0.14f),
+    iconTint: Color = AcademyGreen,
+    showDivider: Boolean = true
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
+        }
+        Text(
+            label,
+            modifier = Modifier.padding(start = 8.dp).weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+    if (showDivider) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+    }
+}
+
+/** The icon-badge "label / bold value" meta item used in a [ProfileSummaryCard]'s bottom row. */
+@Composable
+fun ProfileMetaItem(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    iconBg: Color = AcademyGreen.copy(alpha = 0.14f),
+    iconTint: Color = AcademyGreen
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            modifier = Modifier.size(26.dp).clip(RoundedCornerShape(8.dp)).background(iconBg),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(13.dp))
+        }
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(
+                value,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+/**
+ * The top "profile" card on a details screen: an icon/initials avatar with a small status-dot
+ * badge, a title + colored tag row, a divider, then two [ProfileMetaItem]s split by a vertical rule.
+ */
+@Composable
+fun ProfileSummaryCard(
+    avatar: @Composable () -> Unit,
+    title: String,
+    tagText: String,
+    tagColor: Color,
+    metaItems: @Composable RowScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                avatar()
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(Modifier.size(7.dp).clip(CircleShape).background(tagColor))
+                        Text(tagText, color = tagColor, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Row(Modifier.fillMaxWidth(), content = metaItems)
+        }
+    }
+}
+
+/** The small circular avatar with a status-colored checkmark badge, used inside [ProfileSummaryCard]. */
+@Composable
+fun CheckBadgedAvatar(initialsOrIcon: @Composable () -> Unit, badgeColor: Color) {
+    Box {
+        Box(
+            modifier = Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFDCF3E1)),
+            contentAlignment = Alignment.Center
+        ) {
+            initialsOrIcon()
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(badgeColor)
+                .border(2.dp, Color.White, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(11.dp))
         }
     }
 }
