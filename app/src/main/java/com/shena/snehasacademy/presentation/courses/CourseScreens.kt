@@ -333,7 +333,7 @@ private fun CourseFormFields(
     ) {
         FormIconField(Icons.AutoMirrored.Rounded.MenuBook, CourseInfoBg, CourseInfoAccent, title, onTitleChange, "Course Title *")
         FormIconField(
-            Icons.Rounded.Schedule, CourseInfoBg, CourseInfoAccent, durationDays, onDurationChange, "Duration (Days)",
+            Icons.Rounded.Schedule, CourseInfoBg, CourseInfoAccent, durationDays, onDurationChange, "Duration (Days) *",
             keyboardType = KeyboardType.Number
         )
         LevelSelector(level, onLevelChange)
@@ -376,6 +376,7 @@ fun AddCourseScreen(viewModel: CourseViewModel? = null, onBack: () -> Unit) {
     var durationDays by remember { mutableStateOf("") }
     var level by remember { mutableStateOf("Beginner") }
     var fees by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Scaffold(topBar = { CourseFormHeader("Add Course", "Fill in the details to add a new course", onBack) }) { padding ->
         Column(
@@ -393,7 +394,7 @@ fun AddCourseScreen(viewModel: CourseViewModel? = null, onBack: () -> Unit) {
                 fees = fees, onFeesChange = { fees = it }
             )
 
-            viewModel?.errorMessage?.let { message ->
+            (validationError ?: viewModel?.errorMessage)?.let { message ->
                 Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
@@ -407,6 +408,21 @@ fun AddCourseScreen(viewModel: CourseViewModel? = null, onBack: () -> Unit) {
                     "Save Course",
                     {
                         if (isSaving) return@PrimaryButton
+                        when {
+                            title.isBlank() -> {
+                                validationError = "Course title is required."
+                                return@PrimaryButton
+                            }
+                            durationDays.isBlank() -> {
+                                validationError = "Duration is required."
+                                return@PrimaryButton
+                            }
+                            fees.isBlank() -> {
+                                validationError = "Course fees is required."
+                                return@PrimaryButton
+                            }
+                        }
+                        validationError = null
                         val course = Course(
                             title = title,
                             duration = if (durationDays.isNotBlank()) "$durationDays days" else "",
@@ -457,12 +473,14 @@ fun CourseDetailsScreen(courseId: String, viewModel: CourseViewModel? = null, on
     var duration by remember(course.id) { mutableStateOf(course.duration) }
     var level by remember(course.id) { mutableStateOf(course.level.ifBlank { "Beginner" }) }
     var feesText by remember(course.id) { mutableStateOf(course.fees.toString()) }
+    var validationError by remember(course.id) { mutableStateOf<String?>(null) }
 
     fun resetToCourse() {
         title = course.title
         durationDays = course.duration.takeWhile { it.isDigit() }
         level = course.level.ifBlank { "Beginner" }
         feesText = course.fees.toString()
+        validationError = null
     }
 
     Scaffold(
@@ -499,7 +517,7 @@ fun CourseDetailsScreen(courseId: String, viewModel: CourseViewModel? = null, on
                     fees = feesText, onFeesChange = { feesText = it }
                 )
 
-                viewModel?.errorMessage?.let { message ->
+                (validationError ?: viewModel?.errorMessage)?.let { message ->
                     Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
 
@@ -513,6 +531,21 @@ fun CourseDetailsScreen(courseId: String, viewModel: CourseViewModel? = null, on
                         "Save",
                         {
                             if (isSaving) return@PrimaryButton
+                            when {
+                                title.isBlank() -> {
+                                    validationError = "Course title is required."
+                                    return@PrimaryButton
+                                }
+                                durationDays.isBlank() -> {
+                                    validationError = "Duration is required."
+                                    return@PrimaryButton
+                                }
+                                feesText.isBlank() -> {
+                                    validationError = "Course fees is required."
+                                    return@PrimaryButton
+                                }
+                            }
+                            validationError = null
                             val updatedDuration = if (durationDays.isNotBlank()) "$durationDays days" else ""
                             val updated = course.copy(
                                 title = title,
