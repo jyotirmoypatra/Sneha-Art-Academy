@@ -424,6 +424,7 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
     var address by remember { mutableStateOf("") }
     var aadhaarNumber by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     Scaffold(topBar = { StudentFormHeader(onBack = onBack) }) { padding ->
         Column(
@@ -444,7 +445,7 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                 aadhaarNumber = aadhaarNumber, onAadhaarNumberChange = { aadhaarNumber = it }
             )
 
-            viewModel?.errorMessage?.let { message ->
+            (validationError ?: viewModel?.errorMessage)?.let { message ->
                 Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
@@ -458,6 +459,17 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                     "Register Student",
                     {
                         if (isSaving) return@PrimaryButton
+                        when {
+                            fullName.isBlank() -> {
+                                validationError = "Full name is required."
+                                return@PrimaryButton
+                            }
+                            mobile.isBlank() -> {
+                                validationError = "Mobile number is required."
+                                return@PrimaryButton
+                            }
+                        }
+                        validationError = null
                         val student = Student(
                             name = fullName,
                             guardianName = guardianName,
@@ -674,6 +686,7 @@ fun StudentDetailsScreen(
 
     var isEditing by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var validationError by remember(student.id) { mutableStateOf<String?>(null) }
 
     var fullName by remember(student.id) { mutableStateOf(student.name) }
     var guardianName by remember(student.id) { mutableStateOf(student.guardianName) }
@@ -692,6 +705,7 @@ fun StudentDetailsScreen(
         mobile = student.mobile
         address = student.address
         aadhaarNumber = student.aadhaarNumber
+        validationError = null
     }
 
     Scaffold(
@@ -715,6 +729,9 @@ fun StudentDetailsScreen(
                     address = address, onAddressChange = { address = it },
                     aadhaarNumber = aadhaarNumber, onAadhaarNumberChange = { aadhaarNumber = it }
                 )
+                (validationError ?: viewModel?.errorMessage)?.let { message ->
+                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
                 val isSaving = viewModel?.isSaving == true
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
@@ -729,6 +746,17 @@ fun StudentDetailsScreen(
                         "Save",
                         {
                             if (isSaving) return@PrimaryButton
+                            when {
+                                fullName.isBlank() -> {
+                                    validationError = "Full name is required."
+                                    return@PrimaryButton
+                                }
+                                mobile.isBlank() -> {
+                                    validationError = "Mobile number is required."
+                                    return@PrimaryButton
+                                }
+                            }
+                            validationError = null
                             dateOfBirthDisplay = dateOfBirthMillis?.let { DobFormatter.format(Date(it)) } ?: dateOfBirthDisplay
                             val updated = student.copy(
                                 name = fullName,

@@ -9,6 +9,8 @@ import com.shena.snehasacademy.domain.model.Student
 class DuplicateEnrollmentException :
     Exception("This student is already enrolled in the selected course.")
 
+class DuplicateStudentException(message: String) : Exception(message)
+
 interface AcademyRepository {
     suspend fun getStudents(): List<Student>
     suspend fun getStudent(studentId: String): Student?

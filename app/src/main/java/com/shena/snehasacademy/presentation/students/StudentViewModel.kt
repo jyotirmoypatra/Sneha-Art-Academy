@@ -9,6 +9,7 @@ import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
 import com.shena.snehasacademy.domain.model.Course
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
+import com.shena.snehasacademy.domain.repository.DuplicateStudentException
 import kotlinx.coroutines.launch
 
 class StudentViewModel(
@@ -73,6 +74,13 @@ class StudentViewModel(
         errorMessage = null
         viewModelScope.launch {
             try {
+                val otherStudents = repository.getStudents().filter { it.id != student.id }
+                if (student.aadhaarNumber.isNotBlank() && otherStudents.any { it.aadhaarNumber == student.aadhaarNumber }) {
+                    throw DuplicateStudentException("A student with this Aadhaar number already exists.")
+                }
+                if (otherStudents.any { it.mobile == student.mobile }) {
+                    throw DuplicateStudentException("A student with this mobile number already exists.")
+                }
                 repository.updateStudent(student)
                 onComplete()
             } catch (e: Exception) {

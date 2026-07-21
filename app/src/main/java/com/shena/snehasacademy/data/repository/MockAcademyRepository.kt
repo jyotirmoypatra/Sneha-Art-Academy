@@ -8,6 +8,7 @@ import com.shena.snehasacademy.domain.model.Payment
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
+import com.shena.snehasacademy.domain.repository.DuplicateStudentException
 
 /**
  * In-memory repository backed by [MockData]. Used only for Compose previews — production
@@ -16,7 +17,15 @@ import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
 class MockAcademyRepository : AcademyRepository {
     override suspend fun getStudents(): List<Student> = MockData.students
     override suspend fun getStudent(studentId: String): Student? = MockData.students.find { it.id == studentId }
-    override suspend fun addStudent(student: Student): String = student.id
+    override suspend fun addStudent(student: Student): String {
+        if (student.aadhaarNumber.isNotBlank() && MockData.students.any { it.aadhaarNumber == student.aadhaarNumber }) {
+            throw DuplicateStudentException("A student with this Aadhaar number already exists.")
+        }
+        if (MockData.students.any { it.mobile == student.mobile }) {
+            throw DuplicateStudentException("A student with this mobile number already exists.")
+        }
+        return student.id
+    }
     override suspend fun updateStudent(student: Student) = Unit
 
     override suspend fun getCourses(): List<Course> = MockData.courses

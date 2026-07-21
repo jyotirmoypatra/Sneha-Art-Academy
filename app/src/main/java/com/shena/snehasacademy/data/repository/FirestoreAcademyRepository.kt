@@ -8,6 +8,7 @@ import com.shena.snehasacademy.domain.model.Payment
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
+import com.shena.snehasacademy.domain.repository.DuplicateStudentException
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -36,6 +37,13 @@ class FirestoreAcademyRepository(
         studentsRef.document(studentId).get().await().toObject(Student::class.java)
 
     override suspend fun addStudent(student: Student): String {
+        val existingStudents = getStudents()
+        if (student.aadhaarNumber.isNotBlank() && existingStudents.any { it.aadhaarNumber == student.aadhaarNumber }) {
+            throw DuplicateStudentException("A student with this Aadhaar number already exists.")
+        }
+        if (existingStudents.any { it.mobile == student.mobile }) {
+            throw DuplicateStudentException("A student with this mobile number already exists.")
+        }
         val id = student.id.ifBlank { generateNextStudentId() }
         studentsRef.document(id).set(student.copy(id = id)).await()
         return id
