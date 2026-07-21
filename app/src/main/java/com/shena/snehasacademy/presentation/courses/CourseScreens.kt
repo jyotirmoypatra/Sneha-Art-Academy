@@ -16,10 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +52,7 @@ import com.shena.snehasacademy.core.theme.SnehasAcademyTheme
 import com.shena.snehasacademy.core.utils.MockData
 import com.shena.snehasacademy.domain.model.Course
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseListScreen(
     viewModel: CourseViewModel? = null,
@@ -64,14 +67,28 @@ fun CourseListScreen(
         onPauseOrDispose { }
     }
 
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(viewModel?.isLoading) {
+        if (viewModel?.isLoading == false) isPullRefreshing = false
+    }
+
     ScreenScaffold("Courses", true, onBack) { contentModifier ->
-        LazyColumn(contentModifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { PrimaryButton("Add Course", onAdd) }
-            if (viewModel?.isLoading == true && courses.isEmpty()) {
-                item { LoadingView() }
-            }
-            items(courses) { course ->
-                CourseRowCard(course, onClick = { onOpenDetails(course.id) })
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                viewModel?.refresh()
+            },
+            modifier = contentModifier.fillMaxSize()
+        ) {
+            LazyColumn(Modifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item { PrimaryButton("Add Course", onAdd) }
+                if (viewModel?.isLoading == true && courses.isEmpty()) {
+                    item { LoadingView() }
+                }
+                items(courses) { course ->
+                    CourseRowCard(course, onClick = { onOpenDetails(course.id) })
+                }
             }
         }
     }

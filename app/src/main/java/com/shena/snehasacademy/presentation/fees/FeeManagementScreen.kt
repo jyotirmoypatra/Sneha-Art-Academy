@@ -12,10 +12,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +57,7 @@ private fun feeRowsFrom(students: List<Student>): List<FeeRow> =
         }
     }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeeManagementScreen(
     viewModel: EnrollmentViewModel? = null,
@@ -67,23 +74,37 @@ fun FeeManagementScreen(
         onPauseOrDispose { }
     }
 
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(viewModel?.isLoading) {
+        if (viewModel?.isLoading == false) isPullRefreshing = false
+    }
+
     ScreenScaffold("Fee Management", true, onBack) { contentModifier ->
-        LazyColumn(
-            modifier = contentModifier.fillMaxSize().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                viewModel?.refresh()
+            },
+            modifier = contentModifier.fillMaxSize()
         ) {
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    InfoCard("Collected", "₹$totalCollected", Modifier.weight(1f))
-                    InfoCard("Pending", "₹$totalDue", Modifier.weight(1f))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        InfoCard("Collected", "₹$totalCollected", Modifier.weight(1f))
+                        InfoCard("Pending", "₹$totalDue", Modifier.weight(1f))
+                    }
                 }
-            }
-            item { SectionHeader("Payments by Enrollment", Modifier.padding(top = 4.dp)) }
-            if (viewModel?.isLoading == true && rows.isEmpty()) {
-                item { LoadingView() }
-            }
-            items(rows) { row ->
-                FeePaymentRowCard(row, onClick = { onOpenHistory(row.studentId, row.enrollmentId) })
+                item { SectionHeader("Payments by Enrollment", Modifier.padding(top = 4.dp)) }
+                if (viewModel?.isLoading == true && rows.isEmpty()) {
+                    item { LoadingView() }
+                }
+                items(rows) { row ->
+                    FeePaymentRowCard(row, onClick = { onOpenHistory(row.studentId, row.enrollmentId) })
+                }
             }
         }
     }

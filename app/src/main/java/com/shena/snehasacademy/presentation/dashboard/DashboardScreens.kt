@@ -29,11 +29,17 @@ import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +61,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
     viewModel: AdminDashboardViewModel? = null,
@@ -62,38 +69,53 @@ fun AdminDashboardScreen(
     onLogout: () -> Unit
 ) {
     val vm = viewModel ?: AdminDashboardViewModel()
+
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(vm.isLoading) {
+        if (!vm.isLoading) isPullRefreshing = false
+    }
+
     Scaffold(topBar = { AdminHeaderBar() }) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                vm.refresh()
+            },
+            modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            item { Spacer(modifier = Modifier.height(4.dp)) }
-            item {
-                AdminStatsGrid(
-                    totalStudents = vm.totalStudents,
-                    totalCourses = vm.totalCourses,
-                    totalEnrollments = vm.totalEnrollments,
-                    totalCertificates = vm.totalCertificates
-                )
-            }
-            item {
-                SectionHeader(
-                    "Management",
-                    Modifier.padding(top = 4.dp),
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
-            items(vm.menu) { (route, title) ->
-                DashboardCard(
-                    title,
-                    adminSubtitle(title),
-                    onClick = { if (route != Route.AdminDashboard) onNavigate(route) },
-                    icon = adminMenuIcon(title)
-                )
-            }
-            item {
-                OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                    Text("Logout", fontWeight = FontWeight.Bold)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(4.dp)) }
+                item {
+                    AdminStatsGrid(
+                        totalStudents = vm.totalStudents,
+                        totalCourses = vm.totalCourses,
+                        totalEnrollments = vm.totalEnrollments,
+                        totalCertificates = vm.totalCertificates
+                    )
+                }
+                item {
+                    SectionHeader(
+                        "Management",
+                        Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+                items(vm.menu) { (route, title) ->
+                    DashboardCard(
+                        title,
+                        adminSubtitle(title),
+                        onClick = { if (route != Route.AdminDashboard) onNavigate(route) },
+                        icon = adminMenuIcon(title)
+                    )
+                }
+                item {
+                    OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+                        Text("Logout", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

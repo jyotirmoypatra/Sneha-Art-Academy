@@ -21,6 +21,8 @@ class AdminDashboardViewModel(
         private set
     var totalCertificates by mutableStateOf(0)
         private set
+    var isLoading by mutableStateOf(false)
+        private set
 
     val menu = listOf(
         Route.Students to "Students",
@@ -37,6 +39,7 @@ class AdminDashboardViewModel(
 
     fun refresh() {
         viewModelScope.launch {
+            isLoading = true
             try {
                 val students = repository.getStudents()
                 totalStudents = students.size
@@ -46,6 +49,7 @@ class AdminDashboardViewModel(
             } catch (e: Exception) {
                 // Leave stats at their last known values; the menu itself doesn't depend on this.
             }
+            isLoading = false
         }
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -67,6 +68,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, onOpenDetails: (String) -> Unit, onBack: () -> Unit) {
     val students = viewModel?.students ?: MockData.students
@@ -86,23 +88,37 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
         onPauseOrDispose { }
     }
 
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(viewModel?.isLoading) {
+        if (viewModel?.isLoading == false) isPullRefreshing = false
+    }
+
     ScreenScaffold("Students", true, onBack) { contentModifier ->
-        LazyColumn(contentModifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { PrimaryButton("Register Student", onAdd) }
-            item { SearchBar(query, { query = it }, placeholder = "Search by name or ID") }
-            if (viewModel?.isLoading == true && students.isEmpty()) {
-                item { LoadingView() }
-            } else if (filtered.isEmpty()) {
-                item { EmptyState("No students found", "Try a different name or student ID.") }
-            } else {
-                items(filtered) { student ->
-                    ListItemCard(
-                        student.name,
-                        student.id,
-                        student.status,
-                        Modifier.padding(top = 2.dp),
-                        onClick = { onOpenDetails(student.id) }
-                    )
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                viewModel?.refresh()
+            },
+            modifier = contentModifier.fillMaxSize()
+        ) {
+            LazyColumn(Modifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item { PrimaryButton("Register Student", onAdd) }
+                item { SearchBar(query, { query = it }, placeholder = "Search by name or ID") }
+                if (viewModel?.isLoading == true && students.isEmpty()) {
+                    item { LoadingView() }
+                } else if (filtered.isEmpty()) {
+                    item { EmptyState("No students found", "Try a different name or student ID.") }
+                } else {
+                    items(filtered) { student ->
+                        ListItemCard(
+                            student.name,
+                            student.id,
+                            student.status,
+                            Modifier.padding(top = 2.dp),
+                            onClick = { onOpenDetails(student.id) }
+                        )
+                    }
                 }
             }
         }

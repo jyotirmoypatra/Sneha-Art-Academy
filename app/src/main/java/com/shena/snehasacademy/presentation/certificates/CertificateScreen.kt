@@ -12,10 +12,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +63,7 @@ private fun buildRows(certificates: List<Certificate>, students: List<Student>, 
         )
     }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CertificateScreen(viewModel: CertificateViewModel? = null, onBack: () -> Unit) {
     var query by remember { mutableStateOf("") }
@@ -86,23 +90,37 @@ fun CertificateScreen(viewModel: CertificateViewModel? = null, onBack: () -> Uni
         onPauseOrDispose { }
     }
 
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(viewModel?.isLoading) {
+        if (viewModel?.isLoading == false) isPullRefreshing = false
+    }
+
     ScreenScaffold("Certificates", true, onBack) { contentModifier ->
-        LazyColumn(
-            modifier = contentModifier.fillMaxSize().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                viewModel?.refresh()
+            },
+            modifier = contentModifier.fillMaxSize()
         ) {
-            item { SearchBar(query, { query = it }, placeholder = "Search by certificate ID, name, or student ID") }
-            if (viewModel?.isLoading == true && rows.isEmpty()) {
-                item { LoadingView() }
-            } else if (filtered.isEmpty()) {
-                item { EmptyState("No certificates found", "Generated certificates will appear here.") }
-            } else {
-                items(filtered) { row ->
-                    CertificateRowCard(
-                        row,
-                        Modifier.padding(top = 2.dp),
-                        onClick = { selectedRow = row }
-                    )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { SearchBar(query, { query = it }, placeholder = "Search by certificate ID, name, or student ID") }
+                if (viewModel?.isLoading == true && rows.isEmpty()) {
+                    item { LoadingView() }
+                } else if (filtered.isEmpty()) {
+                    item { EmptyState("No certificates found", "Generated certificates will appear here.") }
+                } else {
+                    items(filtered) { row ->
+                        CertificateRowCard(
+                            row,
+                            Modifier.padding(top = 2.dp),
+                            onClick = { selectedRow = row }
+                        )
+                    }
                 }
             }
         }

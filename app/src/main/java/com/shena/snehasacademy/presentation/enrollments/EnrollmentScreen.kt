@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -92,6 +93,7 @@ private fun flattenEnrollments(students: List<Student>): List<EnrollmentRow> =
         }
     }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EnrollmentScreen(
     viewModel: EnrollmentViewModel? = null,
@@ -117,24 +119,38 @@ fun EnrollmentScreen(
         onPauseOrDispose { }
     }
 
+    var isPullRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(viewModel?.isLoading) {
+        if (viewModel?.isLoading == false) isPullRefreshing = false
+    }
+
     ScreenScaffold("Enrollments", true, onBack) { contentModifier ->
-        LazyColumn(
-            modifier = contentModifier.fillMaxSize().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        PullToRefreshBox(
+            isRefreshing = isPullRefreshing,
+            onRefresh = {
+                isPullRefreshing = true
+                viewModel?.refresh()
+            },
+            modifier = contentModifier.fillMaxSize()
         ) {
-            item { PrimaryButton("Enroll Student", onCreateEnrollment) }
-            item { SearchBar(query, { query = it }, placeholder = "Search by student ID or name") }
-            if (viewModel?.isLoading == true && enrollments.isEmpty()) {
-                item { LoadingView() }
-            } else if (filtered.isEmpty()) {
-                item { EmptyState("No enrollments found", "Try a different student ID or name.") }
-            } else {
-                items(filtered) { enrollment ->
-                    EnrollmentRowCard(
-                        enrollment,
-                        Modifier.padding(top = 2.dp),
-                        onClick = { onOpenDetails(enrollment.studentId, enrollment.enrollmentId) }
-                    )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { PrimaryButton("Enroll Student", onCreateEnrollment) }
+                item { SearchBar(query, { query = it }, placeholder = "Search by student ID or name") }
+                if (viewModel?.isLoading == true && enrollments.isEmpty()) {
+                    item { LoadingView() }
+                } else if (filtered.isEmpty()) {
+                    item { EmptyState("No enrollments found", "Try a different student ID or name.") }
+                } else {
+                    items(filtered) { enrollment ->
+                        EnrollmentRowCard(
+                            enrollment,
+                            Modifier.padding(top = 2.dp),
+                            onClick = { onOpenDetails(enrollment.studentId, enrollment.enrollmentId) }
+                        )
+                    }
                 }
             }
         }
