@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Chat
@@ -35,9 +37,11 @@ import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Female
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Male
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PersonAdd
@@ -88,13 +92,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
 import com.shena.snehasacademy.core.components.EmptyState
 import com.shena.snehasacademy.core.components.LoadingView
-import com.shena.snehasacademy.core.components.ModernTextField
-import com.shena.snehasacademy.core.components.SectionCard
-import com.shena.snehasacademy.core.components.SegmentedSelector
 import com.shena.snehasacademy.core.components.academyTextFieldColors
-import com.shena.snehasacademy.core.components.DateField
 import com.shena.snehasacademy.core.components.PrimaryButton
-import com.shena.snehasacademy.core.components.ScreenScaffold
 import com.shena.snehasacademy.core.components.SearchBar
 import com.shena.snehasacademy.core.components.SecondaryButton
 import com.shena.snehasacademy.core.components.StatusBadge
@@ -252,8 +251,8 @@ private fun StudentsHeader(
             }
             Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    "Students",
-                    style = MaterialTheme.typography.headlineMedium,
+                    "All Students",
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF4B260C)
                 )
@@ -267,11 +266,16 @@ private fun StudentsHeader(
                 IconButton(
                     onClick = onFilterClick,
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(35.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(Color.White)
                 ) {
-                    Icon(Icons.Rounded.FilterAlt, contentDescription = "Filter students", tint = AcademyGreen)
+                    Icon(
+                        Icons.Rounded.FilterAlt,
+                        contentDescription = "Filter students",
+                        tint = AcademyGreen,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
                 DropdownMenu(expanded = showFilterMenu, onDismissRequest = onDismissFilterMenu) {
                     StudentFilterOptions.forEach { option ->
@@ -412,10 +416,11 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
     var aadhaarNumber by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    ScreenScaffold("Student Registration Form", true, onBack) { contentModifier ->
+    Scaffold(topBar = { StudentFormHeader(onBack = onBack) }) { padding ->
         Column(
-            modifier = contentModifier
+            modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -434,6 +439,7 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                 Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
+            val isSaving = viewModel?.isSaving == true
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -442,6 +448,7 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                 PrimaryButton(
                     "Register Student",
                     {
+                        if (isSaving) return@PrimaryButton
                         val student = Student(
                             name = fullName,
                             guardianName = guardianName,
@@ -459,7 +466,10 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
                             onBack()
                         }
                     },
-                    Modifier.weight(2f)
+                    Modifier.weight(2f),
+                    enabled = !isSaving,
+                    isLoading = isSaving,
+                    leadingIcon = Icons.Rounded.PersonAdd
                 )
             }
         }
@@ -485,6 +495,53 @@ fun AddStudentScreen(viewModel: StudentViewModel? = null, onBack: () -> Unit) {
 }
 
 @Composable
+private fun StudentFormHeader(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF7E8))
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_back),
+                contentDescription = "Back",
+                tint = Color(0xFF4B260C),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "Student Registration",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF4B260C)
+            )
+            Text(
+                "Enter student information",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF7A4A24)
+            )
+        }
+        Box(
+            modifier = Modifier.size(35.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFDCF3E1)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Rounded.School, contentDescription = null, tint = AcademyGreen, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+private val BasicInfoAccent = Color(0xFF6C4FC1)
+private val BasicInfoBg = Color(0xFFEAE4FA)
+private val ContactInfoAccent = AcademyGreen
+private val ContactInfoBg = Color(0xFFDCF3E1)
+private val IdentityAccent = Color(0xFFD97706)
+private val IdentityBg = Color(0xFFFCEBD9)
+
+@Composable
 private fun StudentFormFields(
     fullName: String,
     onFullNameChange: (String) -> Unit,
@@ -501,43 +558,215 @@ private fun StudentFormFields(
     aadhaarNumber: String,
     onAadhaarNumberChange: (String) -> Unit
 ) {
-    SectionCard("Basic Information") {
-        ModernTextField(fullName, onFullNameChange, "Full Name *")
-        ModernTextField(guardianName, onGuardianNameChange, "Father's / Guardian's Name")
-        DateOfBirthField(dateOfBirthMillis, onClick = onDateOfBirthClick)
-        SegmentedSelector("Gender", listOf("Male", "Female", "Other"), gender, onGenderChange)
+    FormSectionCard(
+        icon = Icons.Rounded.Person,
+        iconBg = BasicInfoBg,
+        iconTint = BasicInfoAccent,
+        title = "Basic Information",
+        subtitle = "Enter the student's basic details"
+    ) {
+        FormIconField(Icons.Rounded.Person, BasicInfoBg, BasicInfoAccent, fullName, onFullNameChange, "Full Name *")
+        FormIconField(Icons.Rounded.Person, BasicInfoBg, BasicInfoAccent, guardianName, onGuardianNameChange, "Father's / Guardian's Name")
+        FormDateField(Icons.Rounded.CalendarMonth, BasicInfoBg, BasicInfoAccent, dateOfBirthMillis, onDateOfBirthClick)
+        GenderSelector(gender, onGenderChange)
     }
 
-    SectionCard("Contact Information") {
-        ModernTextField(mobile, onMobileChange, "Mobile Number *", keyboardType = KeyboardType.Phone)
-        MultilineField(address, onAddressChange, "Address")
+    FormSectionCard(
+        icon = Icons.Rounded.Call,
+        iconBg = ContactInfoBg,
+        iconTint = ContactInfoAccent,
+        title = "Contact Information",
+        subtitle = "How can we contact the student?"
+    ) {
+        FormIconField(
+            Icons.Rounded.Call, ContactInfoBg, ContactInfoAccent, mobile, onMobileChange, "Mobile Number *",
+            keyboardType = KeyboardType.Phone
+        )
+        FormIconField(
+            Icons.Rounded.LocationOn, ContactInfoBg, ContactInfoAccent, address, onAddressChange, "Address",
+            minLines = 3, maxLines = 5
+        )
     }
 
-    SectionCard("Identity (Optional)") {
-        ModernTextField(aadhaarNumber, onAadhaarNumberChange, "Aadhaar Number", keyboardType = KeyboardType.Number)
+    FormSectionCard(
+        icon = Icons.Rounded.Badge,
+        iconBg = IdentityBg,
+        iconTint = IdentityAccent,
+        title = "Identity (Optional)",
+        subtitle = "Additional identity information (optional)"
+    ) {
+        FormIconField(
+            Icons.Rounded.Badge, IdentityBg, IdentityAccent, aadhaarNumber, onAadhaarNumberChange, "Aadhaar Number",
+            keyboardType = KeyboardType.Number
+        )
     }
 }
 
 @Composable
-private fun DateOfBirthField(dateMillis: Long?, onClick: () -> Unit) {
-    val formatted = remember(dateMillis) {
-        dateMillis?.let { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(it)) }.orEmpty()
+private fun FormSectionCard(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(
+                        modifier = Modifier.size(36.dp).clip(CircleShape).background(iconBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+                    }
+                    Column {
+                        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Box(Modifier.width(56.dp).height(2.dp).clip(RoundedCornerShape(1.dp)).background(iconTint))
+            }
+            content()
+        }
     }
-    DateField(label = "Date of Birth", dateText = formatted, onClick = onClick)
 }
 
 @Composable
-private fun MultilineField(value: String, onValueChange: (String) -> Unit, label: String) {
+private fun FormIconField(
+    icon: ImageVector,
+    iconBg: Color,
+    iconTint: Color,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    minLines: Int = 1,
+    maxLines: Int = 1
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        shape = RoundedCornerShape(16.dp),
-        minLines = 3,
-        maxLines = 5,
+        placeholder = { Text(placeholder, style = MaterialTheme.typography.bodySmall) },
+        textStyle = MaterialTheme.typography.bodySmall,
+        leadingIcon = { FormFieldIconBox(icon, iconBg, iconTint) },
+        singleLine = maxLines <= 1,
+        minLines = minLines,
+        maxLines = maxLines,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(14.dp),
         colors = academyTextFieldColors(),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     )
+}
+
+@Composable
+private fun FormDateField(icon: ImageVector, iconBg: Color, iconTint: Color, dateMillis: Long?, onClick: () -> Unit) {
+    val formatted = remember(dateMillis) {
+        dateMillis?.let { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(it)) }.orEmpty()
+    }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = formatted,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Date of Birth", style = MaterialTheme.typography.bodySmall) },
+            textStyle = MaterialTheme.typography.bodySmall,
+            leadingIcon = { FormFieldIconBox(icon, iconBg, iconTint) },
+            trailingIcon = {
+                Row(
+                    modifier = Modifier.padding(end = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(13.dp))
+                    Text("Select", style = MaterialTheme.typography.labelSmall, color = iconTint, maxLines = 1)
+                }
+            },
+            shape = RoundedCornerShape(14.dp),
+            colors = academyTextFieldColors(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                )
+        )
+    }
+}
+
+@Composable
+private fun FormFieldIconBox(icon: ImageVector, iconBg: Color, iconTint: Color) {
+    Box(
+        modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(iconBg),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
+    }
+}
+
+@Composable
+private fun GenderSelector(selected: String, onSelect: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Gender",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            GenderOption(Icons.Rounded.Male, "Male", selected == "Male", BasicInfoAccent, Modifier.weight(1f)) { onSelect("Male") }
+            GenderOption(Icons.Rounded.Female, "Female", selected == "Female", Color(0xFFD6336C), Modifier.weight(1f)) { onSelect("Female") }
+            GenderOption(Icons.Rounded.Groups, "Other", selected == "Other", AcademyGreen, Modifier.weight(1f)) { onSelect("Other") }
+        }
+    }
+}
+
+@Composable
+private fun GenderOption(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (selected) accent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(15.dp)
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) accent else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
 }
 
 private val DobFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -617,14 +846,20 @@ fun StudentDetailsScreen(
                     address = address, onAddressChange = { address = it },
                     aadhaarNumber = aadhaarNumber, onAadhaarNumberChange = { aadhaarNumber = it }
                 )
+                val isSaving = viewModel?.isSaving == true
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SecondaryButton("Cancel", { resetToStudent(); isEditing = false }, Modifier.weight(1f))
+                    SecondaryButton(
+                        "Cancel",
+                        { resetToStudent(); isEditing = false },
+                        Modifier.weight(1f)
+                    )
                     PrimaryButton(
                         "Save",
                         {
+                            if (isSaving) return@PrimaryButton
                             dateOfBirthDisplay = dateOfBirthMillis?.let { DobFormatter.format(Date(it)) } ?: dateOfBirthDisplay
                             val updated = student.copy(
                                 name = fullName,
@@ -636,13 +871,18 @@ fun StudentDetailsScreen(
                                 aadhaarNumber = aadhaarNumber
                             )
                             if (viewModel != null) {
-                                viewModel.updateStudent(updated) { loadedStudent = updated }
+                                viewModel.updateStudent(updated) {
+                                    loadedStudent = updated
+                                    isEditing = false
+                                }
                             } else {
                                 loadedStudent = updated
+                                isEditing = false
                             }
-                            isEditing = false
                         },
-                        Modifier.weight(2f)
+                        Modifier.weight(2f),
+                        enabled = !isSaving,
+                        isLoading = isSaving
                     )
                 }
             } else {
@@ -740,7 +980,7 @@ private fun StudentDetailsHeader(onBack: () -> Unit, onEditClick: () -> Unit) {
         Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 "Student Details",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF4B260C)
             )
@@ -753,7 +993,7 @@ private fun StudentDetailsHeader(onBack: () -> Unit, onEditClick: () -> Unit) {
         IconButton(
             onClick = onEditClick,
             modifier = Modifier
-                .size(44.dp)
+                .size(35.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color.White)
         ) {
