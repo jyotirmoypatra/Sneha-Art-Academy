@@ -77,12 +77,17 @@ class EnrollmentViewModel(
     }
 
     fun updateEnrollment(studentId: String, enrollment: CourseEnrollment, onComplete: () -> Unit) {
+        if (isSavingEnrollment) return
+        isSavingEnrollment = true
+        errorMessage = null
         viewModelScope.launch {
             try {
                 repository.updateEnrollment(studentId, enrollment)
                 onComplete()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't update enrollment."
+            } finally {
+                isSavingEnrollment = false
             }
         }
     }

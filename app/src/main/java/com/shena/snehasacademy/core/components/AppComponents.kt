@@ -77,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.shena.snehasacademy.R
 import com.shena.snehasacademy.core.theme.AcademyGold
 import com.shena.snehasacademy.core.theme.AcademyGreen
@@ -91,12 +92,13 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
-    leadingIcon: ImageVector? = null
+    leadingIcon: ImageVector? = null,
+    height: Dp = 52.dp
 ) {
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier.fillMaxWidth().height(height),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = AcademyGreen)
     ) {
@@ -117,10 +119,10 @@ fun PrimaryButton(
 }
 
 @Composable
-fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, height: Dp = 50.dp) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(50.dp),
+        modifier = modifier.fillMaxWidth().height(height),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)
     ) {
@@ -646,7 +648,7 @@ fun StatusBadge(status: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun StatusCapsuleSelector(options: List<String>, selected: String, modifier: Modifier = Modifier, onSelect: (String) -> Unit) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         options.forEach { option ->
             val color = statusColor(option)
             val isSelected = option.equals(selected, ignoreCase = true)
@@ -657,13 +659,13 @@ fun StatusCapsuleSelector(options: List<String>, selected: String, modifier: Mod
                     .background(if (isSelected) color else color.copy(alpha = 0.12f))
                     .border(1.dp, color, RoundedCornerShape(50))
                     .clickable { onSelect(option) }
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                    .padding(horizontal = 3.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     option,
                     color = if (isSelected) Color.White else color,
-                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     softWrap = false,
