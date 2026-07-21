@@ -13,6 +13,7 @@ import com.shena.snehasacademy.domain.model.CourseEnrollment
 import com.shena.snehasacademy.domain.model.Payment
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
+import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
 import kotlinx.coroutines.launch
 
 class EnrollmentViewModel(
@@ -23,6 +24,8 @@ class EnrollmentViewModel(
     var courses by mutableStateOf<List<Course>>(emptyList())
         private set
     var isLoading by mutableStateOf(false)
+        private set
+    var isSavingEnrollment by mutableStateOf(false)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
@@ -54,12 +57,19 @@ class EnrollmentViewModel(
         }
 
     fun createEnrollment(studentId: String, enrollment: CourseEnrollment, onComplete: () -> Unit) {
+        if (isSavingEnrollment) return
+        isSavingEnrollment = true
+        errorMessage = null
         viewModelScope.launch {
             try {
                 repository.addEnrollment(studentId, enrollment)
                 onComplete()
+            } catch (e: DuplicateEnrollmentException) {
+                errorMessage = e.message
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't create enrollment."
+            } finally {
+                isSavingEnrollment = false
             }
         }
     }

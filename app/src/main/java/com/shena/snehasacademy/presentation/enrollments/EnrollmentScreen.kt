@@ -232,10 +232,12 @@ fun CreateEnrollmentScreen(viewModel: EnrollmentViewModel? = null, onBack: () ->
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                val isSaving = viewModel?.isSavingEnrollment == true
                 SecondaryButton("Cancel", onBack, Modifier.weight(1f))
                 PrimaryButton(
                     "Save",
                     {
+                        if (isSaving) return@PrimaryButton
                         val selectedStudent = students.find { "${it.name} (${it.id})" == selectedStudentText }
                         val selectedCourse = courses.getOrNull(selectedCourseIndex)
                         if (selectedStudent == null || selectedCourse == null) {
@@ -255,7 +257,9 @@ fun CreateEnrollmentScreen(viewModel: EnrollmentViewModel? = null, onBack: () ->
                             onBack()
                         }
                     },
-                    Modifier.weight(2f)
+                    Modifier.weight(2f),
+                    enabled = !isSaving,
+                    isLoading = isSaving
                 )
             }
         }

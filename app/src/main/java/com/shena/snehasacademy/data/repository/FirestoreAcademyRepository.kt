@@ -7,6 +7,7 @@ import com.shena.snehasacademy.domain.model.CourseEnrollment
 import com.shena.snehasacademy.domain.model.Payment
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
+import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -93,7 +94,11 @@ class FirestoreAcademyRepository(
     }
 
     override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) {
-        val student = getStudent(studentId) ?: return
+        val student = getStudent(studentId) ?: throw IllegalStateException("Student not found.")
+        val alreadyEnrolled = student.enrollments.any { it.courseName == enrollment.courseName }
+        if (alreadyEnrolled) {
+            throw DuplicateEnrollmentException()
+        }
         val id = enrollment.id.ifBlank { studentsRef.document().id }
         updateStudent(student.copy(enrollments = student.enrollments + enrollment.copy(id = id)))
     }

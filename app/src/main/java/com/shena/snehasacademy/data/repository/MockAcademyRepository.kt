@@ -7,6 +7,7 @@ import com.shena.snehasacademy.domain.model.CourseEnrollment
 import com.shena.snehasacademy.domain.model.Payment
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
+import com.shena.snehasacademy.domain.repository.DuplicateEnrollmentException
 
 /**
  * In-memory repository backed by [MockData]. Used only for Compose previews — production
@@ -23,7 +24,12 @@ class MockAcademyRepository : AcademyRepository {
     override suspend fun addCourse(course: Course): String = course.id
     override suspend fun updateCourse(course: Course) = Unit
 
-    override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) = Unit
+    override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) {
+        val student = getStudent(studentId) ?: return
+        if (student.enrollments.any { it.courseName == enrollment.courseName }) {
+            throw DuplicateEnrollmentException()
+        }
+    }
     override suspend fun updateEnrollment(studentId: String, enrollment: CourseEnrollment) = Unit
     override suspend fun addPayment(studentId: String, enrollmentId: String, payment: Payment) = Unit
 
