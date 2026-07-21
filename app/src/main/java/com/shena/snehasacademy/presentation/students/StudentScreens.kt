@@ -792,7 +792,7 @@ fun StudentDetailsScreen(
     }
 
     if (viewModel != null && isLoadingStudent && loadedStudent == null) {
-        Scaffold(topBar = { StudentDetailsHeader(onBack = onBack, onEditClick = {}) }) { padding ->
+        Scaffold(topBar = { StudentDetailsHeader(isEditing = false, onBack = onBack, onEditClick = {}) }) { padding ->
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { LoadingView() }
         }
         return
@@ -826,7 +826,7 @@ fun StudentDetailsScreen(
     }
 
     Scaffold(
-        topBar = { StudentDetailsHeader(onBack = onBack, onEditClick = { isEditing = !isEditing }) }
+        topBar = { StudentDetailsHeader(isEditing = isEditing, onBack = onBack, onEditClick = { isEditing = !isEditing }) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -960,7 +960,7 @@ fun StudentDetailsScreen(
 }
 
 @Composable
-private fun StudentDetailsHeader(onBack: () -> Unit, onEditClick: () -> Unit) {
+private fun StudentDetailsHeader(isEditing: Boolean, onBack: () -> Unit, onEditClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -979,7 +979,7 @@ private fun StudentDetailsHeader(onBack: () -> Unit, onEditClick: () -> Unit) {
         }
         Column(Modifier.weight(1f).padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                "Student Details",
+                if (isEditing) "Edit Student Details" else "Student Details",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF4B260C)
