@@ -12,6 +12,7 @@ data class Student(
     val mobile: String = "",
     val address: String = "",
     val aadhaarNumber: String = "",
+    val joinDate: String = "",
     val enrollments: List<CourseEnrollment> = emptyList()
 )
 
