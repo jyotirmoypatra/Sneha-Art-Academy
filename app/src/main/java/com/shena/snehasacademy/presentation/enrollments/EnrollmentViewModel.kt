@@ -29,6 +29,8 @@ class EnrollmentViewModel(
         private set
     var isDeletingEnrollment by mutableStateOf(false)
         private set
+    var isSavingPayment by mutableStateOf(false)
+        private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
@@ -109,12 +111,17 @@ class EnrollmentViewModel(
     }
 
     fun addPayment(studentId: String, enrollmentId: String, payment: Payment, onComplete: () -> Unit) {
+        if (isSavingPayment) return
+        isSavingPayment = true
+        errorMessage = null
         viewModelScope.launch {
             try {
                 repository.addPayment(studentId, enrollmentId, payment)
                 onComplete()
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't add payment."
+            } finally {
+                isSavingPayment = false
             }
         }
     }
