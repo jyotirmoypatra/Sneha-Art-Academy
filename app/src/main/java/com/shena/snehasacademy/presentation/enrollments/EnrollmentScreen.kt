@@ -370,7 +370,10 @@ private val FeesBg = Color(0xFFDCF3E1)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateEnrollmentScreen(viewModel: EnrollmentViewModel? = null, onBack: () -> Unit) {
-    val students = viewModel?.students ?: MockData.students
+    val students = remember(viewModel?.students) {
+        // Newest registrations first, matching the Student List screen's ordering.
+        (viewModel?.students ?: MockData.students).sortedByDescending { it.registrationDate }
+    }
     val allCourses = viewModel?.courses ?: MockData.courses
     val studentOptions = remember(students) { students.map { "${it.name} (${it.id})" } }
 
