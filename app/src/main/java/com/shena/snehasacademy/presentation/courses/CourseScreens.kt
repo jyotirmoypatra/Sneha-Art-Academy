@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
@@ -173,7 +174,20 @@ fun CourseListScreen(
                 if (viewModel?.isLoading == true && courses.isEmpty()) {
                     item { LoadingView() }
                 } else if (filtered.isEmpty()) {
-                    item { EmptyState("No courses found", "Try a different title or course ID.") }
+                    item {
+                        EmptyState(
+                            "No courses found",
+                            "Try a different title or course ID.",
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.SearchOff,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                        )
+                    }
                 } else {
                     items(filtered) { course ->
                         CourseRowCard(course, Modifier.padding(top = 2.dp), onClick = { onOpenDetails(course.id) })

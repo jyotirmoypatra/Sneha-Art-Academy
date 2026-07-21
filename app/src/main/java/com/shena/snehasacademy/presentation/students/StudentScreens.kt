@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Male
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.PersonSearch
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.School
@@ -216,7 +217,20 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
                 if (viewModel?.isLoading == true && students.isEmpty()) {
                     item { LoadingView() }
                 } else if (filtered.isEmpty()) {
-                    item { EmptyState("No students found", "Try a different name or student ID.") }
+                    item {
+                        EmptyState(
+                            "No students found",
+                            "Try a different name or student ID.",
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.PersonSearch,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                        )
+                    }
                 } else {
                     items(filtered) { student ->
                         StudentRowCard(student, Modifier.padding(top = 2.dp), onClick = { onOpenDetails(student.id) })

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.AlertDialog
@@ -229,7 +230,20 @@ fun EnrollmentScreen(
                 if (viewModel?.isLoading == true && enrollments.isEmpty()) {
                     item { LoadingView() }
                 } else if (filtered.isEmpty()) {
-                    item { EmptyState("No enrollments found", "Try a different student ID or name.") }
+                    item {
+                        EmptyState(
+                            "No enrollments found",
+                            "Try a different student ID or name.",
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.SearchOff,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                        )
+                    }
                 } else {
                     items(filtered) { enrollment ->
                         EnrollmentRowCard(
@@ -720,6 +734,7 @@ fun EnrollmentDetailsScreen(
     var certificate by remember(enrollment.id) { mutableStateOf<Certificate?>(null) }
     var isLoadingCertificate by remember(enrollment.id) { mutableStateOf(false) }
     var isGeneratingCertificate by remember(enrollment.id) { mutableStateOf(false) }
+    var certificateActionError by remember(enrollment.id) { mutableStateOf<String?>(null) }
     var showViewCertificate by remember { mutableStateOf(false) }
 
     val course = remember(courseName, allCourses) { allCourses.find { it.title == courseName } }
@@ -956,17 +971,22 @@ fun EnrollmentDetailsScreen(
                             )
                         }
                         else -> {
-                            viewModel?.errorMessage?.let { message ->
+                            (certificateActionError ?: viewModel?.errorMessage)?.let { message ->
                                 Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                             }
                             PrimaryButton(
                                 text = if (isGeneratingCertificate) "Generating..." else "Generate Certificate",
                                 enabled = !isGeneratingCertificate,
                                 onClick = {
-                                    val currentCourse = course
-                                    if (viewModel == null || currentCourse == null || isGeneratingCertificate) return@PrimaryButton
+                                    if (viewModel == null || isGeneratingCertificate) return@PrimaryButton
+                                    val courseIdForCertificate = enrollment.courseId.ifBlank { course?.id.orEmpty() }
+                                    if (courseIdForCertificate.isBlank()) {
+                                        certificateActionError = "Course details are still loading. Please try again in a moment."
+                                        return@PrimaryButton
+                                    }
+                                    certificateActionError = null
                                     isGeneratingCertificate = true
-                                    viewModel.generateCertificate(studentId, enrollment.id, currentCourse.id) { generated ->
+                                    viewModel.generateCertificate(studentId, enrollment.id, courseIdForCertificate) { generated ->
                                         certificate = generated
                                         isGeneratingCertificate = false
                                     }

@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.core.components.AcademyLogo
 import com.shena.snehasacademy.core.components.AppToolbar
 import com.shena.snehasacademy.core.components.DashboardCard
@@ -69,6 +70,11 @@ fun AdminDashboardScreen(
     onLogout: () -> Unit
 ) {
     val vm = viewModel ?: AdminDashboardViewModel()
+
+    LifecycleResumeEffect(vm) {
+        vm.refresh()
+        onPauseOrDispose { }
+    }
 
     var isPullRefreshing by remember { mutableStateOf(false) }
     LaunchedEffect(vm.isLoading) {

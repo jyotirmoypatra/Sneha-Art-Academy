@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -180,7 +181,20 @@ fun FeeManagementScreen(
                 if (viewModel?.isLoading == true && rows.isEmpty()) {
                     item { LoadingView() }
                 } else if (filtered.isEmpty()) {
-                    item { EmptyState("No payment records found", "Try a different student ID or name.") }
+                    item {
+                        EmptyState(
+                            "No payment records found",
+                            "Try a different student ID or name.",
+                            icon = {
+                                Icon(
+                                    Icons.Rounded.SearchOff,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                        )
+                    }
                 } else {
                     items(filtered) { row ->
                         FeeRowCard(row, Modifier.padding(top = 2.dp), onClick = { onOpenHistory(row.studentId, row.enrollmentId) })

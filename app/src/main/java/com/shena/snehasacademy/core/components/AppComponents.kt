@@ -596,13 +596,18 @@ fun NoInternetOverlay() {
 }
 
 @Composable
-fun EmptyState(title: String, subtitle: String, modifier: Modifier = Modifier) {
+fun EmptyState(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    icon: @Composable () -> Unit = { MehendiMark(Modifier.size(64.dp)) }
+) {
     Column(
         modifier = modifier.fillMaxWidth().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        MehendiMark(Modifier.size(64.dp))
+        icon()
         Text(title, fontWeight = FontWeight.Bold)
         Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
