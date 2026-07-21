@@ -17,6 +17,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Assignment
+import androidx.compose.material.icons.automirrored.rounded.FactCheck
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -68,7 +77,12 @@ fun AdminDashboardScreen(
             }
             item { SectionHeader("Menu", Modifier.padding(top = 4.dp)) }
             items(vm.menu) { (route, title) ->
-                DashboardCard(title, adminSubtitle(title), onClick = { if (route != Route.AdminDashboard) onNavigate(route) })
+                DashboardCard(
+                    title,
+                    adminSubtitle(title),
+                    onClick = { if (route != Route.AdminDashboard) onNavigate(route) },
+                    icon = adminMenuIcon(title)
+                )
             }
             item {
                 OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
@@ -244,6 +258,17 @@ private fun adminSubtitle(title: String) = when (title) {
     "Certificates" -> "Plan certificates for completed courses."
     "Settings" -> "Configure profile and app preferences."
     else -> "Academy overview and quick actions."
+}
+
+private fun adminMenuIcon(title: String): ImageVector = when (title) {
+    "Students" -> Icons.Rounded.Groups
+    "Courses" -> Icons.AutoMirrored.Rounded.MenuBook
+    "Enrollments" -> Icons.AutoMirrored.Rounded.Assignment
+    "Attendance" -> Icons.AutoMirrored.Rounded.FactCheck
+    "Fee Management" -> Icons.Rounded.Payments
+    "Certificates" -> Icons.Rounded.WorkspacePremium
+    "Settings" -> Icons.Rounded.Settings
+    else -> Icons.Rounded.Groups
 }
 
 private fun studentSubtitle(title: String) = when (title) {
