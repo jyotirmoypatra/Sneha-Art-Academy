@@ -13,7 +13,9 @@ interface AcademyRepository {
     suspend fun updateStudent(student: Student)
 
     suspend fun getCourses(): List<Course>
+    suspend fun getCourse(courseId: String): Course?
     suspend fun addCourse(course: Course): String
+    suspend fun updateCourse(course: Course)
 
     suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment)
     suspend fun updateEnrollment(studentId: String, enrollment: CourseEnrollment)

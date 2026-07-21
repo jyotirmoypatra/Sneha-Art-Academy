@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,7 +25,6 @@ import androidx.compose.material.icons.automirrored.rounded.FactCheck
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Payments
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,7 +76,13 @@ fun AdminDashboardScreen(
                     totalCertificates = vm.totalCertificates
                 )
             }
-            item { SectionHeader("Menu", Modifier.padding(top = 4.dp)) }
+            item {
+                SectionHeader(
+                    "Management",
+                    Modifier.padding(top = 4.dp),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
             items(vm.menu) { (route, title) ->
                 DashboardCard(
                     title,
@@ -174,11 +181,17 @@ private fun AdminStatsGrid(
     totalCertificates: Int
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+        ) {
             DashboardStatCard("🎓", StudentsBg, StudentsAccent, "Students", totalStudents.toString(), "Total Students", Modifier.weight(1f))
             DashboardStatCard("📘", CoursesBg, CoursesAccent, "Courses", totalCourses.toString(), "Total Courses", Modifier.weight(1f))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+        ) {
             DashboardStatCard("📋", EnrollmentsBg, EnrollmentsAccent, "Enrollments", totalEnrollments.toString(), "Total Enrollments", Modifier.weight(1f))
             DashboardStatCard("🏅", CertificatesBg, CertificatesAccent, "Certificates", totalCertificates.toString(), "Total Certificates", Modifier.weight(1f))
         }
@@ -196,24 +209,29 @@ private fun DashboardStatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
+        modifier = modifier.fillMaxHeight(),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = iconBg.copy(alpha = 0.45f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(iconBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(icon, style = MaterialTheme.typography.titleLarge)
+        Column(
+            modifier = Modifier.padding(12.dp).fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(iconBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(icon, style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(label, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
             }
-            Text(label, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -256,7 +274,6 @@ private fun adminSubtitle(title: String) = when (title) {
     "Attendance" -> "Track class presence and history."
     "Fee Management" -> "Monitor dues and collections."
     "Certificates" -> "Plan certificates for completed courses."
-    "Settings" -> "Configure profile and app preferences."
     else -> "Academy overview and quick actions."
 }
 
@@ -267,7 +284,6 @@ private fun adminMenuIcon(title: String): ImageVector = when (title) {
     "Attendance" -> Icons.AutoMirrored.Rounded.FactCheck
     "Fee Management" -> Icons.Rounded.Payments
     "Certificates" -> Icons.Rounded.WorkspacePremium
-    "Settings" -> Icons.Rounded.Settings
     else -> Icons.Rounded.Groups
 }
 

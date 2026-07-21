@@ -63,10 +63,17 @@ class FirestoreAcademyRepository(
     override suspend fun getCourses(): List<Course> =
         coursesRef.get().await().documents.mapNotNull { it.toObject(Course::class.java) }
 
+    override suspend fun getCourse(courseId: String): Course? =
+        coursesRef.document(courseId).get().await().toObject(Course::class.java)
+
     override suspend fun addCourse(course: Course): String {
         val id = course.id.ifBlank { generateNextCourseId() }
         coursesRef.document(id).set(course.copy(id = id)).await()
         return id
+    }
+
+    override suspend fun updateCourse(course: Course) {
+        coursesRef.document(course.id).set(course).await()
     }
 
     /**

@@ -26,10 +26,9 @@ class AdminDashboardViewModel(
         Route.Students to "Students",
         Route.Courses to "Courses",
         Route.Enrollments to "Enrollments",
-        Route.Attendance to "Attendance",
+      //  Route.Attendance to "Attendance",
         Route.Fees to "Fee Management",
-        Route.Certificates to "Certificates",
-        Route.Settings to "Settings"
+        Route.Certificates to "Certificates"
     )
 
     init {

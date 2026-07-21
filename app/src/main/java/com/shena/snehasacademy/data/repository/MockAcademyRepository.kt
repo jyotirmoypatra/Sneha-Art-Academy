@@ -19,7 +19,9 @@ class MockAcademyRepository : AcademyRepository {
     override suspend fun updateStudent(student: Student) = Unit
 
     override suspend fun getCourses(): List<Course> = MockData.courses
+    override suspend fun getCourse(courseId: String): Course? = MockData.courses.find { it.id == courseId }
     override suspend fun addCourse(course: Course): String = course.id
+    override suspend fun updateCourse(course: Course) = Unit
 
     override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) = Unit
     override suspend fun updateEnrollment(studentId: String, enrollment: CourseEnrollment) = Unit

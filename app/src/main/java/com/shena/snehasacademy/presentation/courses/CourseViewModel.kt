@@ -47,4 +47,23 @@ class CourseViewModel(
             }
         }
     }
+
+    suspend fun getCourse(courseId: String): Course? =
+        try {
+            repository.getCourse(courseId)
+        } catch (e: Exception) {
+            errorMessage = e.localizedMessage ?: "Couldn't load course."
+            null
+        }
+
+    fun updateCourse(course: Course, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.updateCourse(course)
+                onComplete()
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Couldn't update course."
+            }
+        }
+    }
 }

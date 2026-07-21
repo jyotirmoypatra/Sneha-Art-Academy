@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.core.components.CertificateViewDialog
 import com.shena.snehasacademy.core.components.EmptyState
+import com.shena.snehasacademy.core.components.LabelValueRow
 import com.shena.snehasacademy.core.components.LoadingView
 import com.shena.snehasacademy.core.components.ScreenScaffold
 import com.shena.snehasacademy.core.components.SearchBar
@@ -133,29 +133,11 @@ private fun CertificateRowCard(row: CertificateRow, modifier: Modifier = Modifie
             Text(row.studentName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                CertificateDetailRow("Student ID", row.studentId)
-                CertificateDetailRow("Certificate ID", row.certificateId)
-                CertificateDetailRow("Issue Date", row.issueDate)
+                LabelValueRow("Student ID", row.studentId)
+                LabelValueRow("Certificate ID", row.certificateId)
+                LabelValueRow("Issue Date", row.issueDate)
             }
         }
-    }
-}
-
-@Composable
-private fun CertificateDetailRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "$label:",
-            modifier = Modifier.width(108.dp),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 

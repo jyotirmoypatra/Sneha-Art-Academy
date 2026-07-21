@@ -15,6 +15,7 @@ import com.shena.snehasacademy.presentation.auth.LoginSelectionScreen
 import com.shena.snehasacademy.presentation.auth.StudentLoginScreen
 import com.shena.snehasacademy.presentation.certificates.CertificateScreen
 import com.shena.snehasacademy.presentation.courses.AddCourseScreen
+import com.shena.snehasacademy.presentation.courses.CourseDetailsScreen
 import com.shena.snehasacademy.presentation.courses.CourseListScreen
 import com.shena.snehasacademy.presentation.dashboard.AdminDashboardScreen
 import com.shena.snehasacademy.presentation.dashboard.StudentDashboardScreen
@@ -113,9 +114,26 @@ fun SnehasNavHost() {
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(Route.Courses.path) { CourseListScreen(viewModel(), { navController.navigate(Route.AddCourse.path) }, { navController.popBackStack() }) }
+        composable(Route.Courses.path) {
+            CourseListScreen(
+                viewModel = viewModel(),
+                onAdd = { navController.navigate(Route.AddCourse.path) },
+                onOpenDetails = { courseId -> navController.navigate(Route.CourseDetails.createRoute(courseId)) },
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable(Route.AddCourse.path) {
             AddCourseScreen(viewModel = viewModel(), onBack = { navController.popBackStack() })
+        }
+        composable(
+            Route.CourseDetails.path,
+            arguments = listOf(navArgument("courseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            CourseDetailsScreen(
+                courseId = backStackEntry.arguments?.getString("courseId").orEmpty(),
+                viewModel = viewModel(),
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(Route.Enrollments.path) {
             EnrollmentScreen(

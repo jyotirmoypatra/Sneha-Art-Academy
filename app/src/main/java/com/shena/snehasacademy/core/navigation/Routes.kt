@@ -14,6 +14,9 @@ sealed class Route(val path: String) {
     }
     data object Courses : Route("courses")
     data object AddCourse : Route("add_course")
+    data object CourseDetails : Route("course_details/{courseId}") {
+        fun createRoute(courseId: String) = "course_details/$courseId"
+    }
     data object Enrollments : Route("enrollments")
     data object CreateEnrollment : Route("create_enrollment")
     data object EnrollmentDetails : Route("enrollment_details/{studentId}/{enrollmentId}") {

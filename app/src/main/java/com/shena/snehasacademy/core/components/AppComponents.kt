@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBars
@@ -69,6 +70,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.shena.snehasacademy.R
 import com.shena.snehasacademy.core.theme.AcademyGold
@@ -366,11 +368,11 @@ fun ProfileCard(name: String, subtitle: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+fun SectionHeader(title: String, modifier: Modifier = Modifier, style: TextStyle = MaterialTheme.typography.titleLarge) {
     Text(
         text = title,
         modifier = modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleLarge,
+        style = style,
         color = MaterialTheme.colorScheme.secondary,
         fontWeight = FontWeight.Bold
     )
@@ -413,6 +415,28 @@ fun LabeledInfo(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value.ifBlank { "—" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/**
+ * A compact "Label : Value" row with a fixed-width label column so labels/colons line up
+ * vertically across multiple rows (used by card summaries like Certificates and Courses).
+ */
+@Composable
+fun LabelValueRow(label: String, value: String, modifier: Modifier = Modifier, labelWidth: Dp = 108.dp) {
+    Row(modifier = modifier.fillMaxWidth()) {
+        Text(
+            "$label:",
+            modifier = Modifier.width(labelWidth),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            value.ifBlank { "—" },
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
