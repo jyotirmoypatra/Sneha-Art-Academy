@@ -24,7 +24,8 @@ data class CourseEnrollment(
     val enrollmentDate: String = "",
     val fees: Int = 0,
     val payments: List<Payment> = emptyList(),
-    val certificateId: String = ""
+    val certificateId: String = "",
+    val courseId: String = ""
 ) {
     val amountPaid: Int get() = payments.sumOf { it.amount }
 }

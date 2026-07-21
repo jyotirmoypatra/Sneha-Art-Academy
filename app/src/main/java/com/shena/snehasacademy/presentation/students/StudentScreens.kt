@@ -675,11 +675,11 @@ fun StudentDetailsScreen(
                         )
                     }
                     if (student.enrollments.isEmpty()) {
-                        Text("No course enrollments yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No course enrollments yet.",  style = MaterialTheme.typography.labelSmall,color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         student.enrollments.forEach { enrollment ->
-                            val courseId = remember(enrollment.courseName, courses) {
-                                courses.find { it.title == enrollment.courseName }?.id.orEmpty()
+                            val courseId = remember(enrollment.courseId, enrollment.courseName, courses) {
+                                enrollment.courseId.ifBlank { courses.find { it.title == enrollment.courseName }?.id.orEmpty() }
                             }
 
                             Box(
@@ -1007,7 +1007,7 @@ private fun StudentContactActions(mobile: String) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         ContactActionButton(
             icon = Icons.AutoMirrored.Rounded.Chat,
-            label = "Message on WhatsApp",
+            label = "WhatsApp",
             containerColor = Color(0xFFDCF3E1),
             contentColor = AcademyGreen,
             modifier = Modifier.weight(1f),

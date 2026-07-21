@@ -264,6 +264,7 @@ fun CreateEnrollmentScreen(viewModel: EnrollmentViewModel? = null, onBack: () ->
                         }
                         validationError = null
                         val enrollment = CourseEnrollment(
+                            courseId = selectedCourse.id,
                             courseName = selectedCourse.title,
                             status = "Active",
                             enrollmentDate = enrollmentDateMillis?.let { EnrollmentDateFormatter.format(Date(it)) }.orEmpty(),
@@ -592,7 +593,11 @@ fun EnrollmentDetailsScreen(
                             "Save",
                             {
                                 val updatedDate = enrollmentDateMillis?.let { EnrollmentDateFormatter.format(Date(it)) } ?: enrollment.enrollmentDate
-                                val updated = enrollment.copy(courseName = courseName, enrollmentDate = updatedDate)
+                                val updated = enrollment.copy(
+                                    courseId = allCourses.find { it.title == courseName }?.id ?: enrollment.courseId,
+                                    courseName = courseName,
+                                    enrollmentDate = updatedDate
+                                )
                                 persistEnrollment(updated) {
                                     enrollmentDateDisplay = updatedDate
                                     isEditingCourse = false

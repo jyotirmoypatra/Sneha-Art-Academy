@@ -95,7 +95,10 @@ class FirestoreAcademyRepository(
 
     override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) {
         val student = getStudent(studentId) ?: throw IllegalStateException("Student not found.")
-        val alreadyEnrolled = student.enrollments.any { it.courseName == enrollment.courseName }
+        val alreadyEnrolled = student.enrollments.any {
+            (enrollment.courseId.isNotBlank() && it.courseId == enrollment.courseId) ||
+                it.courseName == enrollment.courseName
+        }
         if (alreadyEnrolled) {
             throw DuplicateEnrollmentException()
         }

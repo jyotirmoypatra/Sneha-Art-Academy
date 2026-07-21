@@ -24,11 +24,13 @@ object MockData {
                     payments = listOf(
                         Payment("PAY-0001", 5000, "10 Jan 2026"),
                         Payment("PAY-0002", 5000, "10 Feb 2026")
-                    )
+                    ),
+                    courseId = "CRS-01"
                 ),
                 CourseEnrollment(
                     "ENR-0002", "Fine Art Foundations", "Completed", "02 Mar 2025", fees = 9000,
-                    payments = listOf(Payment("PAY-0003", 9000, "02 Mar 2025"))
+                    payments = listOf(Payment("PAY-0003", 9000, "02 Mar 2025")),
+                    courseId = "CRS-03"
                 )
             )
         ),
@@ -46,7 +48,8 @@ object MockData {
             enrollments = listOf(
                 CourseEnrollment(
                     "ENR-0003", "Arabic Mehendi Basics", "Active", "15 Feb 2026", fees = 6000,
-                    payments = listOf(Payment("PAY-0004", 3000, "15 Feb 2026"))
+                    payments = listOf(Payment("PAY-0004", 3000, "15 Feb 2026")),
+                    courseId = "CRS-02"
                 )
             )
         ),
@@ -62,7 +65,7 @@ object MockData {
             address = "8, Hill View, Puri",
             aadhaarNumber = "XXXX-XXXX-9012",
             enrollments = listOf(
-                CourseEnrollment("ENR-0004", "Fine Art Foundations", "Due", "05 Apr 2026", fees = 9000)
+                CourseEnrollment("ENR-0004", "Fine Art Foundations", "Due", "05 Apr 2026", fees = 9000, courseId = "CRS-03")
             )
         )
     )

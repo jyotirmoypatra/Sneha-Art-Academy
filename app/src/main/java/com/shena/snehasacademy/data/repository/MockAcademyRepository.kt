@@ -26,7 +26,11 @@ class MockAcademyRepository : AcademyRepository {
 
     override suspend fun addEnrollment(studentId: String, enrollment: CourseEnrollment) {
         val student = getStudent(studentId) ?: return
-        if (student.enrollments.any { it.courseName == enrollment.courseName }) {
+        val alreadyEnrolled = student.enrollments.any {
+            (enrollment.courseId.isNotBlank() && it.courseId == enrollment.courseId) ||
+                it.courseName == enrollment.courseName
+        }
+        if (alreadyEnrolled) {
             throw DuplicateEnrollmentException()
         }
     }
