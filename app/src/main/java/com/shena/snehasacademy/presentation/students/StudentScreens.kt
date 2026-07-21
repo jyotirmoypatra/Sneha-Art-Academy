@@ -121,7 +121,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val StudentFilterOptions = listOf("All", "Active", "Inactive")
+private val StudentFilterOptions = listOf("All", "Active", "Completed")
 private val RegistrationDateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
 private fun joinedThisMonth(registrationDate: Long): Boolean {
@@ -130,6 +130,21 @@ private fun joinedThisMonth(registrationDate: Long): Boolean {
     val nowCal = Calendar.getInstance()
     return parsedCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR) &&
         parsedCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
+}
+
+/**
+ * The student's overall academy status, derived from their enrollments rather than the raw
+ * (rarely-updated) [Student.status] field: Active if they have any ongoing/active enrollment,
+ * Completed if every enrollment is finished, otherwise falls back to their base status.
+ */
+private fun academyStatus(student: Student): String {
+    val hasActiveEnrollment = student.enrollments.any {
+        it.status.equals("Active", ignoreCase = true) || it.status.equals("Ongoing", ignoreCase = true)
+    }
+    if (hasActiveEnrollment) return "Active"
+    val allCompleted = student.enrollments.isNotEmpty() && student.enrollments.all { it.status.equals("Completed", ignoreCase = true) }
+    if (allCompleted) return "Completed"
+    return student.status.ifBlank { "Active" }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,7 +160,7 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
     var showFilterMenu by remember { mutableStateOf(false) }
 
     val statusFiltered = remember(statusFilter, orderedStudents) {
-        if (statusFilter == "All") orderedStudents else orderedStudents.filter { it.status.equals(statusFilter, ignoreCase = true) }
+        if (statusFilter == "All") orderedStudents else orderedStudents.filter { academyStatus(it).equals(statusFilter, ignoreCase = true) }
     }
     val filtered = remember(query, statusFiltered) {
         if (query.isBlank()) {
@@ -158,8 +173,8 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
     }
 
     val totalStudents = students.size
-    val activeStudents = remember(students) { students.count { it.status.equals("Active", ignoreCase = true) } }
-    val inactiveStudents = totalStudents - activeStudents
+    val activeStudents = remember(students) { students.count { academyStatus(it) == "Active" } }
+    val completedStudents = remember(students) { students.count { academyStatus(it) == "Completed" } }
     val newThisMonth = remember(students) { students.count { joinedThisMonth(it.registrationDate) } }
 
     LifecycleResumeEffect(viewModel) {
@@ -210,7 +225,7 @@ fun StudentListScreen(viewModel: StudentViewModel? = null, onAdd: () -> Unit, on
                     StudentStatsRow(
                         total = totalStudents,
                         active = activeStudents,
-                        inactive = inactiveStudents,
+                        completed = completedStudents,
                         newThisMonth = newThisMonth
                     )
                 }
@@ -290,11 +305,11 @@ private fun StudentsHeader(
 }
 
 @Composable
-private fun StudentStatsRow(total: Int, active: Int, inactive: Int, newThisMonth: Int) {
+private fun StudentStatsRow(total: Int, active: Int, completed: Int, newThisMonth: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         StudentStatCard(Icons.Rounded.Groups, Color(0xFFDCF3E1), AcademyGreen, total.toString(), "Total Students", Modifier.weight(1f))
         StudentStatCard(Icons.Rounded.School, Color(0xFFDCEAFB), Color(0xFF2E6FD9), active.toString(), "Active Students", Modifier.weight(1f))
-        StudentStatCard(Icons.Rounded.Person, Color(0xFFFCEBD9), Color(0xFFD97706), inactive.toString(), "Inactive Students", Modifier.weight(1f))
+        StudentStatCard(Icons.Rounded.WorkspacePremium, Color(0xFFFCEBD9), Color(0xFFD97706), completed.toString(), "Completed Students", Modifier.weight(1f))
         StudentStatCard(Icons.Rounded.CalendarMonth, Color(0xFFEAE4FA), Color(0xFF6C4FC1), newThisMonth.toString(), "New This Month", Modifier.weight(1f))
     }
 }
@@ -387,7 +402,7 @@ private fun StudentRowCard(student: Student, modifier: Modifier = Modifier, onCl
                     )
                 }
             }
-            StatusBadge(student.status, Modifier.padding(start = 8.dp))
+            StatusBadge(academyStatus(student), Modifier.padding(start = 8.dp))
             Icon(
                 Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = null,
@@ -835,7 +850,8 @@ private fun StudentProfileCard(student: Student, fullName: String) {
     val initials = remember(fullName) {
         fullName.trim().split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1) }.uppercase()
     }
-    val accent = statusColor(student.status)
+    val effectiveStatus = academyStatus(student)
+    val accent = statusColor(effectiveStatus)
     val joinedText = if (student.registrationDate > 0L) {
         RegistrationDateFormatter.format(Date(student.registrationDate))
     } else {
@@ -852,7 +868,7 @@ private fun StudentProfileCard(student: Student, fullName: String) {
             )
         },
         title = fullName,
-        tagText = "${student.status.ifBlank { "Active" }} Student",
+        tagText = "$effectiveStatus Student",
         tagColor = accent
     ) {
         ProfileMetaItem(Icons.Rounded.School, "Student ID", student.id, Modifier.weight(1f))
