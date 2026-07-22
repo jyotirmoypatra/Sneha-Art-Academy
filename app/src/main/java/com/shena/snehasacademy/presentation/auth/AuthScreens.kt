@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import android.content.Context
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -244,11 +245,74 @@ fun AdminLoginScreen(viewModel: AdminLoginViewModel? = null, onLogin: () -> Unit
                 }
             }
         )
-        AuthSecondaryButton("Register Admin", onRegister)
-        TextButton(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+        var showForgotPassword by remember { mutableStateOf(false) }
+        TextButton(
+            onClick = {
+                viewModel?.clearResetState()
+                showForgotPassword = true
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Forgot Password", color = HennaBrown, fontWeight = FontWeight.SemiBold)
         }
+
+        if (showForgotPassword) {
+            ForgotPasswordDialog(
+                initialEmail = email,
+                isSending = viewModel?.isSendingReset == true,
+                isSent = viewModel?.resetEmailSent == true,
+                errorMessage = viewModel?.resetError,
+                onSend = { resetEmail -> viewModel?.sendPasswordReset(resetEmail) },
+                onDismiss = {
+                    showForgotPassword = false
+                    viewModel?.clearResetState()
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun ForgotPasswordDialog(
+    initialEmail: String,
+    isSending: Boolean,
+    isSent: Boolean,
+    errorMessage: String?,
+    onSend: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var resetEmail by remember { mutableStateOf(initialEmail) }
+    AlertDialog(
+        onDismissRequest = { if (!isSending) onDismiss() },
+        title = { Text("Reset Password") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (isSent) {
+                    Text("A password reset link has been sent to $resetEmail. Please check your inbox.")
+                } else {
+                    Text("Enter your admin email address and we'll send you a link to reset your password.")
+                    ModernTextField(resetEmail, { resetEmail = it }, "Email", keyboardType = KeyboardType.Email)
+                    errorMessage?.let { message ->
+                        Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (isSent) {
+                TextButton(onClick = onDismiss) { Text("Done") }
+            } else {
+                TextButton(enabled = !isSending, onClick = { onSend(resetEmail) }) {
+                    Text(if (isSending) "Sending..." else "Send Link")
+                }
+            }
+        },
+        dismissButton = {
+            if (!isSent) {
+                TextButton(enabled = !isSending, onClick = onDismiss) { Text("Cancel") }
+            }
+        }
+    )
 }
 
 @Composable

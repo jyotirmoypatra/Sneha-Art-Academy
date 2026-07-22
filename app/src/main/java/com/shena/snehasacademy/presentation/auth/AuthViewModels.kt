@@ -24,6 +24,38 @@ class AdminLoginViewModel(
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
+    var isSendingReset by mutableStateOf(false)
+        private set
+    var resetEmailSent by mutableStateOf(false)
+        private set
+    var resetError by mutableStateOf<String?>(null)
+        private set
+
+    fun sendPasswordReset(email: String) {
+        val trimmedEmail = email.trim()
+        if (trimmedEmail.isBlank() || !isValidEmail(trimmedEmail)) {
+            resetError = "Enter a valid email address."
+            return
+        }
+        resetError = null
+        isSendingReset = true
+        viewModelScope.launch {
+            try {
+                auth.sendPasswordResetEmail(trimmedEmail).await()
+                resetEmailSent = true
+            } catch (e: Exception) {
+                resetError = e.localizedMessage ?: "Failed to send reset email. Please try again."
+            } finally {
+                isSendingReset = false
+            }
+        }
+    }
+
+    fun clearResetState() {
+        resetEmailSent = false
+        resetError = null
+    }
+
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         val trimmedEmail = email.trim()
         if (trimmedEmail.isBlank() || password.isBlank()) {
