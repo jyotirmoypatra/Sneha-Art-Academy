@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.rounded.FactCheck
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -282,7 +283,12 @@ fun StudentDashboardScreen(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
             items(vm.menu) { (route, title) ->
-                DashboardCard(title, studentSubtitle(title), onClick = { if (route != Route.StudentDashboard) onNavigate(route) })
+                DashboardCard(
+                    title,
+                    studentSubtitle(title),
+                    onClick = { if (route != Route.StudentDashboard) onNavigate(route) },
+                    icon = studentMenuIcon(title)
+                )
             }
             item {
                 OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
@@ -372,10 +378,17 @@ private fun adminMenuIcon(title: String): ImageVector = when (title) {
 private fun studentSubtitle(title: String) = when (title) {
     "My Profile" -> "View your student information."
     "My Courses" -> "See enrolled classes and progress."
-    "Attendance" -> "Check your attendance record."
     "Fee Status" -> "Review payment status."
-    "Certificates" -> "View earned certificates."
+    "My Certificates" -> "View earned certificates."
     else -> "Your learning home."
+}
+
+private fun studentMenuIcon(title: String): ImageVector = when (title) {
+    "My Profile" -> Icons.Rounded.Person
+    "My Courses" -> Icons.AutoMirrored.Rounded.MenuBook
+    "Fee Status" -> Icons.Rounded.Payments
+    "My Certificates" -> Icons.Rounded.WorkspacePremium
+    else -> Icons.Rounded.Person
 }
 
 @Preview(showBackground = true)
