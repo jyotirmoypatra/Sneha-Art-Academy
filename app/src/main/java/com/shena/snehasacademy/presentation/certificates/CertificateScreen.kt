@@ -251,6 +251,11 @@ private fun CertificateRowCard(row: CertificateRow, modifier: Modifier = Modifie
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
+                    "Course: ${row.courseName}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
                     "Certificate ID: ${row.certificateId}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
