@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shena.snehasacademy.core.navigation.Route
 import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import kotlinx.coroutines.launch
 
@@ -54,13 +55,30 @@ class AdminDashboardViewModel(
     }
 }
 
-class StudentDashboardViewModel : ViewModel() {
+class StudentDashboardViewModel(
+    private val repository: AcademyRepository = FirestoreAcademyRepository()
+) : ViewModel() {
+    var student by mutableStateOf<Student?>(null)
+        private set
+    var isLoading by mutableStateOf(false)
+        private set
+
     val menu = listOf(
-        Route.StudentDashboard to "Home",
         Route.Settings to "My Profile",
         Route.Courses to "My Courses",
-        Route.Attendance to "Attendance",
         Route.Fees to "Fee Status",
         Route.Certificates to "Certificates"
     )
+
+    fun loadStudent(studentId: String) {
+        viewModelScope.launch {
+            isLoading = true
+            student = try {
+                repository.getStudent(studentId)
+            } catch (e: Exception) {
+                null
+            }
+            isLoading = false
+        }
+    }
 }

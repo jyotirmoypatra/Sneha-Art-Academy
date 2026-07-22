@@ -6,7 +6,9 @@ sealed class Route(val path: String) {
     data object AdminRegister : Route("admin_register")
     data object StudentLogin : Route("student_login")
     data object AdminDashboard : Route("admin_dashboard")
-    data object StudentDashboard : Route("student_dashboard")
+    data object StudentDashboard : Route("student_dashboard/{studentId}") {
+        fun createRoute(studentId: String) = "student_dashboard/$studentId"
+    }
     data object Students : Route("students")
     data object AddStudent : Route("add_student")
     data object StudentDetails : Route("student_details/{studentId}") {
@@ -28,5 +30,7 @@ sealed class Route(val path: String) {
         fun createRoute(studentId: String, enrollmentId: String) = "payment_history/$studentId/$enrollmentId"
     }
     data object Certificates : Route("certificates")
-    data object Settings : Route("settings")
+    data object Settings : Route("settings/{studentId}") {
+        fun createRoute(studentId: String) = "settings/$studentId"
+    }
 }

@@ -24,10 +24,10 @@ import com.shena.snehasacademy.presentation.enrollments.EnrollmentDetailsScreen
 import com.shena.snehasacademy.presentation.enrollments.EnrollmentScreen
 import com.shena.snehasacademy.presentation.fees.FeeManagementScreen
 import com.shena.snehasacademy.presentation.fees.PaymentHistoryScreen
-import com.shena.snehasacademy.presentation.settings.SettingsScreen
 import com.shena.snehasacademy.presentation.students.AddStudentScreen
 import com.shena.snehasacademy.presentation.students.StudentDetailsScreen
 import com.shena.snehasacademy.presentation.students.StudentListScreen
+import com.shena.snehasacademy.presentation.students.StudentProfileScreen
 
 @Composable
 fun SnehasNavHost() {
@@ -63,7 +63,7 @@ fun SnehasNavHost() {
         composable(Route.StudentLogin.path) {
             StudentLoginScreen(
                 viewModel = viewModel(),
-                onLogin = { navController.navigate(Route.StudentDashboard.path) },
+                onLogin = { studentId -> navController.navigate(Route.StudentDashboard.createRoute(studentId)) },
                 onBack = { navController.popBackStack(Route.LoginSelection.path, inclusive = false) }
             )
         }
@@ -79,10 +79,20 @@ fun SnehasNavHost() {
                 }
             )
         }
-        composable(Route.StudentDashboard.path) {
+        composable(
+            Route.StudentDashboard.path,
+            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val studentId = backStackEntry.arguments?.getString("studentId").orEmpty()
             StudentDashboardScreen(
+                studentId = studentId,
                 viewModel = viewModel(),
-                onNavigate = { navController.navigate(it.path) },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Settings -> navController.navigate(Route.Settings.createRoute(studentId))
+                        else -> navController.navigate(route.path)
+                    }
+                },
                 onLogout = {
                     navController.navigate(Route.LoginSelection.path) {
                         popUpTo(0)
@@ -190,6 +200,15 @@ fun SnehasNavHost() {
         composable(Route.Certificates.path) {
             CertificateScreen(viewModel = viewModel(), onBack = { navController.popBackStack() })
         }
-        composable(Route.Settings.path) { SettingsScreen { navController.popBackStack() } }
+        composable(
+            Route.Settings.path,
+            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            StudentProfileScreen(
+                studentId = backStackEntry.arguments?.getString("studentId").orEmpty(),
+                viewModel = viewModel(),
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }

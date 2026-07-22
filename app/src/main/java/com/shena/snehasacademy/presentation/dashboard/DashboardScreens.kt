@@ -50,9 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.core.components.AcademyLogo
-import com.shena.snehasacademy.core.components.AppToolbar
 import com.shena.snehasacademy.core.components.DashboardCard
-import com.shena.snehasacademy.core.components.ProfileCard
 import com.shena.snehasacademy.core.components.SectionHeader
 import com.shena.snehasacademy.core.navigation.Route
 import com.shena.snehasacademy.core.theme.AcademyGreen
@@ -266,29 +264,85 @@ private fun DashboardStatCard(
 
 @Composable
 fun StudentDashboardScreen(
+    studentId: String,
     viewModel: StudentDashboardViewModel? = null,
     onNavigate: (Route) -> Unit,
     onLogout: () -> Unit
 ) {
     val vm = viewModel ?: StudentDashboardViewModel()
-    Scaffold(topBar = { AppToolbar("Student Dashboard") }) { padding ->
+
+    LaunchedEffect(studentId) {
+        vm.loadStudent(studentId)
+    }
+
+    Scaffold(topBar = { StudentHeaderBar(vm.student?.name.orEmpty()) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
-                Column(Modifier.padding(top = 12.dp)) {
-                    Text("Namaste, Artist", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("Track your learning journey beautifully.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            item { ProfileCard("Aarohi Sharma", "Bridal Mehendi Masterclass") }
+            item { Spacer(modifier = Modifier.height(4.dp)) }
             items(vm.menu) { (route, title) ->
                 DashboardCard(title, studentSubtitle(title), onClick = { if (route != Route.StudentDashboard) onNavigate(route) })
             }
             item {
                 OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                     Text("Logout", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StudentHeaderBar(studentName: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF7E8))
+            .windowInsetsPadding(WindowInsets.statusBars)
+    ) {
+        StudentHeaderCard(studentName)
+    }
+}
+
+@Composable
+private fun StudentHeaderCard(studentName: String) {
+    val greeting = remember { timeBasedGreeting() }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E8))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AcademyLogo(Modifier.size(90.dp))
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(end = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    "$greeting, Student 👋",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = AcademyGreen,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    "Student Dashboard",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF4B260C),
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleMedium,
+                    softWrap = true
+                )
+                if (studentName.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("👤", style = MaterialTheme.typography.labelSmall)
+                        Text(studentName, style = MaterialTheme.typography.labelSmall, color = Color(0xFF7A4A24))
+                    }
                 }
             }
         }
@@ -333,5 +387,5 @@ private fun AdminDashboardPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun StudentDashboardPreview() {
-    SnehasAcademyTheme { StudentDashboardScreen(onNavigate = {}, onLogout = {}) }
+    SnehasAcademyTheme { StudentDashboardScreen(studentId = "SMAA-STD-001", onNavigate = {}, onLogout = {}) }
 }

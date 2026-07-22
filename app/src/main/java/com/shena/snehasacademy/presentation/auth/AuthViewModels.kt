@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.repository.AcademyRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -107,4 +109,36 @@ class AdminRegisterViewModel(
     }
 }
 
-class StudentLoginViewModel : ViewModel()
+class StudentLoginViewModel(
+    private val repository: AcademyRepository = FirestoreAcademyRepository()
+) : ViewModel() {
+    var isLoading by mutableStateOf(false)
+        private set
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    fun login(studentId: String, mobile: String, onSuccess: (String) -> Unit) {
+        val trimmedId = studentId.trim()
+        val trimmedMobile = mobile.trim()
+        if (trimmedId.isBlank() || trimmedMobile.isBlank()) {
+            errorMessage = "Enter your Student ID and mobile number."
+            return
+        }
+        errorMessage = null
+        isLoading = true
+        viewModelScope.launch {
+            try {
+                val student = repository.getStudent(trimmedId)
+                when {
+                    student == null -> errorMessage = "No student found with this Student ID."
+                    student.mobile.trim() != trimmedMobile -> errorMessage = "Mobile number does not match our records."
+                    else -> onSuccess(student.id)
+                }
+            } catch (e: Exception) {
+                errorMessage = e.localizedMessage ?: "Login failed. Please try again."
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+}

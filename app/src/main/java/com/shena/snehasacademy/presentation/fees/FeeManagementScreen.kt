@@ -59,6 +59,8 @@ import com.shena.snehasacademy.core.theme.SnehasAcademyTheme
 import com.shena.snehasacademy.core.utils.MockData
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.presentation.enrollments.EnrollmentViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 private data class FeeRow(
     val studentId: String,
@@ -66,16 +68,21 @@ private data class FeeRow(
     val studentName: String,
     val courseName: String,
     val fees: Int,
-    val amountPaid: Int
+    val amountPaid: Int,
+    val enrollmentDate: String
 ) {
     val due: Int get() = (fees - amountPaid).coerceAtLeast(0)
 }
 
+private val FeeDateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
 private fun feeRowsFrom(students: List<Student>): List<FeeRow> =
     students.flatMap { student ->
         student.enrollments.map { enrollment ->
-            FeeRow(student.id, enrollment.id, student.name, enrollment.courseName, enrollment.fees, enrollment.amountPaid)
+            FeeRow(student.id, enrollment.id, student.name, enrollment.courseName, enrollment.fees, enrollment.amountPaid, enrollment.enrollmentDate)
         }
+    }.sortedByDescending { row ->
+        runCatching { FeeDateFormatter.parse(row.enrollmentDate)?.time }.getOrNull() ?: 0L
     }
 
 private val FeeFilterOptions = listOf("All", "Paid", "Due")

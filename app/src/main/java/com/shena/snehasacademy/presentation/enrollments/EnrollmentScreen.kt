@@ -119,6 +119,8 @@ private fun flattenEnrollments(students: List<Student>): List<EnrollmentRow> =
         student.enrollments.map { enrollment ->
             EnrollmentRow(enrollment.id, student.name, student.id, enrollment.courseName, enrollment.status, enrollment.enrollmentDate)
         }
+    }.sortedByDescending { row ->
+        runCatching { EnrollmentDateFormatter.parse(row.enrollmentDate)?.time }.getOrNull() ?: 0L
     }
 
 private val EnrollmentStatusOptions = listOf("All", "Active", "Ongoing", "Completed", "Cancelled")
@@ -727,7 +729,10 @@ fun EnrollmentDetailsScreen(
     var isEditingStatus by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showCompletedConfirmation by remember { mutableStateOf(false) }
+    var savingSection by remember { mutableStateOf<String?>(null) }
     val isSavingEnrollment = viewModel?.isSavingEnrollment == true
+    val isSavingCourse = isSavingEnrollment && savingSection == "course"
+    val isSavingStatus = isSavingEnrollment && savingSection == "status"
 
     var courseName by remember(enrollment.id) { mutableStateOf(enrollment.courseName) }
     var status by remember(enrollment.id) { mutableStateOf(enrollment.status) }
@@ -829,8 +834,14 @@ fun EnrollmentDetailsScreen(
                             if (isEditingCourse) {
                                 courseName = enrollment.courseName
                                 enrollmentDateMillis = parsedDateMillis()
+                                isEditingCourse = false
+                            } else {
+                                if (isEditingStatus) {
+                                    status = enrollment.status
+                                    isEditingStatus = false
+                                }
+                                isEditingCourse = true
                             }
-                            isEditingCourse = !isEditingCourse
                         }
                     )
                 }
@@ -864,6 +875,7 @@ fun EnrollmentDetailsScreen(
                             "Save",
                             {
                                 if (isSavingEnrollment) return@PrimaryButton
+                                savingSection = "course"
                                 val updatedDate = enrollmentDateMillis?.let { EnrollmentDateFormatter.format(Date(it)) } ?: enrollment.enrollmentDate
                                 val updated = enrollment.copy(
                                     courseId = allCourses.find { it.title == courseName }?.id ?: enrollment.courseId,
@@ -873,11 +885,12 @@ fun EnrollmentDetailsScreen(
                                 persistEnrollment(updated) {
                                     enrollmentDateDisplay = updatedDate
                                     isEditingCourse = false
+                                    savingSection = null
                                 }
                             },
                             Modifier.weight(1f),
                             enabled = !isSavingEnrollment,
-                            isLoading = isSavingEnrollment,
+                            isLoading = isSavingCourse,
                             height = 40.dp
                         )
                     }
@@ -909,8 +922,15 @@ fun EnrollmentDetailsScreen(
                         onClick = {
                             if (isEditingStatus) {
                                 status = enrollment.status
+                                isEditingStatus = false
+                            } else {
+                                if (isEditingCourse) {
+                                    courseName = enrollment.courseName
+                                    enrollmentDateMillis = parsedDateMillis()
+                                    isEditingCourse = false
+                                }
+                                isEditingStatus = true
                             }
-                            isEditingStatus = !isEditingStatus
                         }
                     )
                 }
@@ -937,13 +957,17 @@ fun EnrollmentDetailsScreen(
                                 if (status == "Completed") {
                                     showCompletedConfirmation = true
                                 } else {
+                                    savingSection = "status"
                                     val updated = enrollment.copy(status = status)
-                                    persistEnrollment(updated) { isEditingStatus = false }
+                                    persistEnrollment(updated) {
+                                        isEditingStatus = false
+                                        savingSection = null
+                                    }
                                 }
                             },
                             Modifier.weight(1f),
                             enabled = !isSavingEnrollment,
-                            isLoading = isSavingEnrollment,
+                            isLoading = isSavingStatus,
                             height = 40.dp
                         )
                     }
@@ -1011,8 +1035,12 @@ fun EnrollmentDetailsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showCompletedConfirmation = false
+                    savingSection = "status"
                     val updated = enrollment.copy(status = status)
-                    persistEnrollment(updated) { isEditingStatus = false }
+                    persistEnrollment(updated) {
+                        isEditingStatus = false
+                        savingSection = null
+                    }
                 }) { Text("Yes") }
             },
             dismissButton = {

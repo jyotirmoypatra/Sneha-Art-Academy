@@ -18,8 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.content.Context
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -212,18 +215,34 @@ fun AdminLoginScreen(viewModel: AdminLoginViewModel? = null, onLogin: () -> Unit
         subtitle = "Manage students, courses, attendance, fees, and academy reports.",
         onBack = onBack
     ) {
-        var email by remember { mutableStateOf("") }
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("admin_login_prefs", Context.MODE_PRIVATE) }
+        var email by remember { mutableStateOf(prefs.getString("email", "").orEmpty()) }
         var password by remember { mutableStateOf("") }
+        var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember_me", false)) }
         val isLoading = viewModel?.isLoading == true
         ModernTextField(email, { email = it }, "Email", keyboardType = KeyboardType.Email)
         PasswordField(password, { password = it })
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it })
+            Text("Remember me", style = MaterialTheme.typography.bodySmall)
+        }
         viewModel?.errorMessage?.let { message ->
             Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
         AuthPrimaryButton(
             text = if (isLoading) "Logging in..." else "Login",
             enabled = !isLoading,
-            onClick = { viewModel?.login(email, password, onLogin) }
+            onClick = {
+                viewModel?.login(email, password) {
+                    if (rememberMe) {
+                        prefs.edit().putBoolean("remember_me", true).putString("email", email).apply()
+                    } else {
+                        prefs.edit().clear().apply()
+                    }
+                    onLogin()
+                }
+            }
         )
         AuthSecondaryButton("Register Admin", onRegister)
         TextButton(onClick = {}, modifier = Modifier.fillMaxWidth()) {
@@ -262,20 +281,45 @@ fun AdminRegisterScreen(viewModel: AdminRegisterViewModel? = null, onCreate: () 
 }
 
 @Composable
-fun StudentLoginScreen(viewModel: StudentLoginViewModel? = null, onLogin: () -> Unit, onBack: () -> Unit) {
+fun StudentLoginScreen(viewModel: StudentLoginViewModel? = null, onLogin: (String) -> Unit, onBack: () -> Unit) {
     AuthFormScaffold(
         title = "Student Login",
         subtitle = "View your courses, attendance, fee status, certificates, and updates.",
         onBack = onBack
     ) {
-        var studentId by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
+        val context = LocalContext.current
+        val prefs = remember { context.getSharedPreferences("student_login_prefs", Context.MODE_PRIVATE) }
+        var studentId by remember { mutableStateOf(prefs.getString("student_id", "").orEmpty()) }
+        var mobile by remember { mutableStateOf(prefs.getString("mobile", "").orEmpty()) }
+        var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember_me", false)) }
+        val isLoading = viewModel?.isLoading == true
         ModernTextField(studentId, { studentId = it }, "Student ID")
-        PasswordField(password, { password = it })
-        AuthPrimaryButton("Login", onLogin)
-        TextButton(onClick = {}, modifier = Modifier.fillMaxWidth()) {
-            Text("Forgot Password", color = HennaBrown, fontWeight = FontWeight.SemiBold)
+        ModernTextField(mobile, { mobile = it }, "Mobile Number", keyboardType = KeyboardType.Phone)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it })
+            Text("Remember me", style = MaterialTheme.typography.bodySmall)
         }
+        viewModel?.errorMessage?.let { message ->
+            Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+        AuthPrimaryButton(
+            text = if (isLoading) "Please wait..." else "Continue",
+            enabled = !isLoading,
+            onClick = {
+                viewModel?.login(studentId, mobile) { loggedInStudentId ->
+                    if (rememberMe) {
+                        prefs.edit()
+                            .putBoolean("remember_me", true)
+                            .putString("student_id", studentId)
+                            .putString("mobile", mobile)
+                            .apply()
+                    } else {
+                        prefs.edit().clear().apply()
+                    }
+                    onLogin(loggedInStudentId)
+                }
+            }
+        )
     }
 }
 
