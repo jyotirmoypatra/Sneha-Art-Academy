@@ -121,7 +121,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val StudentFilterOptions = listOf("All", "Active", "Completed")
+private val StudentFilterOptions = listOf("All", "Active", "Completed", "Inactive")
 private val RegistrationDateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
 private fun joinedThisMonth(registrationDate: Long): Boolean {
@@ -138,12 +138,18 @@ private fun joinedThisMonth(registrationDate: Long): Boolean {
  * Completed if every enrollment is finished, otherwise falls back to their base status.
  */
 private fun academyStatus(student: Student): String {
-    val hasActiveEnrollment = student.enrollments.any {
+    val enrollments = student.enrollments
+    val hasActiveOrOngoing = enrollments.any {
         it.status.equals("Active", ignoreCase = true) || it.status.equals("Ongoing", ignoreCase = true)
     }
-    if (hasActiveEnrollment) return "Active"
-    val allCompleted = student.enrollments.isNotEmpty() && student.enrollments.all { it.status.equals("Completed", ignoreCase = true) }
-    if (allCompleted) return "Completed"
+    if (hasActiveOrOngoing) return "Active"
+
+    val hasCompleted = enrollments.any { it.status.equals("Completed", ignoreCase = true) }
+    if (hasCompleted) return "Completed"
+
+    val hasCancelled = enrollments.any { it.status.equals("Cancelled", ignoreCase = true) }
+    if (hasCancelled) return "Inactive"
+
     return student.status.ifBlank { "Active" }
 }
 
