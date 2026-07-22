@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.shena.snehasacademy.core.navigation.Route
 import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
 import com.shena.snehasacademy.domain.model.Certificate
+import com.shena.snehasacademy.domain.model.Course
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import kotlinx.coroutines.launch
@@ -86,6 +87,13 @@ class StudentDashboardViewModel(
     suspend fun getCertificate(enrollmentId: String): Certificate? =
         try {
             repository.getCertificate(enrollmentId)
+        } catch (e: Exception) {
+            null
+        }
+
+    suspend fun getCourse(courseId: String): Course? =
+        try {
+            repository.getCourse(courseId)
         } catch (e: Exception) {
             null
         }

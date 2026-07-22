@@ -12,13 +12,13 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.view.PixelCopy
 import android.view.Window
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Image
@@ -39,11 +39,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect as ComposeRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -130,15 +135,24 @@ fun CertificateFullScreenScreen(data: CertificateTemplateData, onBack: () -> Uni
     var certificateBounds by remember { mutableStateOf<ComposeRect?>(null) }
     var isExporting by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
+    var zoomScale by remember { mutableStateOf(1f) }
+    var zoomOffset by remember { mutableStateOf(Offset.Zero) }
 
     fun export(asPdf: Boolean) {
         val activity = context.findActivity()
-        val bounds = certificateBounds
-        if (activity == null || bounds == null) return
+        if (activity == null || certificateBounds == null) return
         isExporting = true
         statusMessage = null
         scope.launch {
             try {
+                // Reset any zoom/pan first — export must always capture the full certificate,
+                // never whatever cropped-in region the user happened to be viewing.
+                if (zoomScale != 1f || zoomOffset != Offset.Zero) {
+                    zoomScale = 1f
+                    zoomOffset = Offset.Zero
+                    delay(100)
+                }
+                val bounds = certificateBounds ?: return@launch
                 val rect = android.graphics.Rect(
                     bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt()
                 )
@@ -182,26 +196,66 @@ fun CertificateFullScreenScreen(data: CertificateTemplateData, onBack: () -> Uni
             )
         }
     ) { padding ->
-        Column(
+        var containerSize by remember { mutableStateOf(IntSize.Zero) }
+        // The official transformable gesture primitive — reliably starts a fresh
+        // pinch/pan/zoom cycle every time, unlike hand-rolled detectTransformGestures
+        // (which can misbehave once fingers are lifted and touch down again).
+        val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+            val newScale = (zoomScale * zoomChange).coerceIn(1f, 4f)
+            val maxX = (containerSize.width * (newScale - 1f) / 2f).coerceAtLeast(0f)
+            val maxY = (containerSize.height * (newScale - 1f) / 2f).coerceAtLeast(0f)
+            zoomOffset = if (newScale <= 1f) {
+                Offset.Zero
+            } else {
+                Offset(
+                    (zoomOffset.x + panChange.x).coerceIn(-maxX, maxX),
+                    (zoomOffset.y + panChange.y).coerceIn(-maxY, maxY)
+                )
+            }
+            zoomScale = newScale
+        }
+
+        // The gesture-capturing Box must cover the FULL screen area, not just the
+        // certificate's own unscaled footprint — once zoomed in, the visual content
+        // overflows past its unscaled layout bounds, and Compose only delivers touches
+        // within a node's actual hit-test region. A box sized to the unscaled content
+        // left the enlarged, overflowing certificate un-touchable outside that region,
+        // which is why zoom-out and panning got "stuck".
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .onSizeChanged { containerSize = it }
+                .transformable(state = transformState),
+            contentAlignment = Alignment.Center
         ) {
             CertificateTemplate(
                 data = data,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.92f)
+                    .graphicsLayer {
+                        // Read scale/offset here (draw phase) instead of as direct modifier
+                        // params, so pinch/pan updates only invalidate this layer's transform
+                        // instead of recomposing the whole screen on every touch move.
+                        scaleX = zoomScale
+                        scaleY = zoomScale
+                        translationX = zoomOffset.x
+                        translationY = zoomOffset.y
+                    }
                     .onGloballyPositioned { coordinates -> certificateBounds = coordinates.boundsInWindow() }
             )
-            statusMessage?.let { message ->
-                Text(message, modifier = Modifier.padding(top = 12.dp), style = MaterialTheme.typography.bodySmall)
-            }
-            if (isExporting) {
-                Box(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                statusMessage?.let { message ->
+                    Text(message, style = MaterialTheme.typography.bodySmall)
+                }
+                if (isExporting) {
+                    Box(modifier = Modifier.padding(top = 8.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }

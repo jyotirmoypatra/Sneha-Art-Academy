@@ -74,7 +74,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.R
+import androidx.activity.compose.BackHandler
 import com.shena.snehasacademy.core.components.CertificateViewDialog
+import com.shena.snehasacademy.presentation.certificates.CertificateFullScreenScreen
+import com.shena.snehasacademy.presentation.certificates.CertificateTemplateData
 import com.shena.snehasacademy.core.components.DetailInfoRow
 import com.shena.snehasacademy.core.components.DetailSectionContainer
 import com.shena.snehasacademy.core.components.DetailSectionHeaderRow
@@ -747,8 +750,30 @@ fun EnrollmentDetailsScreen(
     var isGeneratingCertificate by remember(enrollment.id) { mutableStateOf(false) }
     var certificateActionError by remember(enrollment.id) { mutableStateOf<String?>(null) }
     var showViewCertificate by remember { mutableStateOf(false) }
+    var showCertificatePreview by remember { mutableStateOf(false) }
 
-    val course = remember(courseName, allCourses) { allCourses.find { it.title == courseName } }
+    val course = remember(courseName, enrollment.courseId, allCourses) {
+        val resolvedCourseId = enrollment.courseId.ifBlank { allCourses.find { c -> c.title == courseName }?.id.orEmpty() }
+        allCourses.find { it.id == resolvedCourseId } ?: allCourses.find { it.title == courseName }
+    }
+
+    if (showCertificatePreview && certificate != null) {
+        val cert = certificate!!
+        BackHandler { showCertificatePreview = false }
+        CertificateFullScreenScreen(
+            data = CertificateTemplateData(
+                certificateId = cert.id,
+                studentId = student.id,
+                studentName = student.name,
+                courseName = courseName,
+                courseDuration = course?.duration.orEmpty(),
+                completionDate = cert.issueDate,
+                issueDate = cert.issueDate
+            ),
+            onBack = { showCertificatePreview = false }
+        )
+        return
+    }
 
     val initials = remember(student.name) {
         student.name.trim().split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1) }.uppercase()
@@ -1088,7 +1113,11 @@ fun EnrollmentDetailsScreen(
             courseName = courseName,
             issueDate = cert.issueDate,
             createdBy = cert.createdBy,
-            onDismiss = { showViewCertificate = false }
+            onDismiss = { showViewCertificate = false },
+            onViewPreview = {
+                showViewCertificate = false
+                showCertificatePreview = true
+            }
         )
     }
 

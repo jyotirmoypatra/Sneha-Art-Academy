@@ -47,11 +47,15 @@ import com.shena.snehasacademy.core.theme.SnehasAcademyTheme
 import com.shena.snehasacademy.core.utils.MockData
 import com.shena.snehasacademy.domain.model.Certificate
 import com.shena.snehasacademy.domain.model.CourseEnrollment
+import com.shena.snehasacademy.presentation.certificates.CertificateFullScreenScreen
+import com.shena.snehasacademy.presentation.certificates.CertificateTemplateData
 import com.shena.snehasacademy.presentation.dashboard.StudentDashboardViewModel
+import androidx.activity.compose.BackHandler
 
 private data class StudentCertificateRow(
     val certificate: Certificate,
-    val enrollment: CourseEnrollment
+    val enrollment: CourseEnrollment,
+    val courseDuration: String
 )
 
 @Composable
@@ -70,18 +74,38 @@ fun StudentCertificatesScreen(
     var rows by remember { mutableStateOf<List<StudentCertificateRow>>(emptyList()) }
     var isLoadingCertificates by remember(studentId) { mutableStateOf(false) }
     var selectedRow by remember { mutableStateOf<StudentCertificateRow?>(null) }
+    var previewRow by remember { mutableStateOf<StudentCertificateRow?>(null) }
 
     LaunchedEffect(student.id, viewModel) {
         val certifiedEnrollments = student.enrollments.filter { it.certificateId.isNotBlank() }
         if (viewModel != null && certifiedEnrollments.isNotEmpty()) {
             isLoadingCertificates = true
             rows = certifiedEnrollments.mapNotNull { enrollment ->
-                viewModel.getCertificate(enrollment.id)?.let { certificate -> StudentCertificateRow(certificate, enrollment) }
+                val certificate = viewModel.getCertificate(enrollment.id) ?: return@mapNotNull null
+                val courseDuration = viewModel.getCourse(enrollment.courseId)?.duration.orEmpty()
+                StudentCertificateRow(certificate, enrollment, courseDuration)
             }
             isLoadingCertificates = false
         } else {
             rows = emptyList()
         }
+    }
+
+    previewRow?.let { row ->
+        BackHandler { previewRow = null }
+        CertificateFullScreenScreen(
+            data = CertificateTemplateData(
+                certificateId = row.certificate.id,
+                studentId = student.id,
+                studentName = student.name,
+                courseName = row.enrollment.courseName,
+                courseDuration = row.courseDuration,
+                completionDate = row.certificate.issueDate,
+                issueDate = row.certificate.issueDate
+            ),
+            onBack = { previewRow = null }
+        )
+        return
     }
 
     Scaffold(
@@ -133,7 +157,11 @@ fun StudentCertificatesScreen(
             courseName = row.enrollment.courseName,
             issueDate = row.certificate.issueDate,
             createdBy = row.certificate.createdBy,
-            onDismiss = { selectedRow = null }
+            onDismiss = { selectedRow = null },
+            onViewPreview = {
+                selectedRow = null
+                previewRow = row
+            }
         )
     }
 }
