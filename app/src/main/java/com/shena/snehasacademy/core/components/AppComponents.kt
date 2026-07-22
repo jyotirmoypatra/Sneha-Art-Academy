@@ -486,7 +486,8 @@ fun CertificateViewDialog(
     courseName: String,
     issueDate: String,
     createdBy: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onViewPreview: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -503,6 +504,9 @@ fun CertificateViewDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text("Close") }
+        },
+        dismissButton = onViewPreview?.let { preview ->
+            { TextButton(onClick = preview) { Text("View Preview") } }
         }
     )
 }

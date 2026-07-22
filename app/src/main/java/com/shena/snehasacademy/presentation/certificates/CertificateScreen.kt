@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.shena.snehasacademy.core.components.CertificateViewDialog
 import com.shena.snehasacademy.core.components.EmptyState
@@ -60,6 +61,7 @@ private data class CertificateRow(
     val studentName: String,
     val studentId: String,
     val courseName: String,
+    val courseDuration: String,
     val issueDate: String,
     val createdBy: String
 )
@@ -73,6 +75,7 @@ private fun buildRows(certificates: List<Certificate>, students: List<Student>, 
             studentName = student?.name.orEmpty().ifBlank { "Unknown Student" },
             studentId = certificate.studentId,
             courseName = course?.title.orEmpty().ifBlank { "Unknown Course" },
+            courseDuration = course?.duration.orEmpty(),
             issueDate = certificate.issueDate,
             createdBy = certificate.createdBy
         )
@@ -90,6 +93,24 @@ private val CertificateAvatarPalette = listOf(
 fun CertificateScreen(viewModel: CertificateViewModel? = null, onBack: () -> Unit) {
     var query by remember { mutableStateOf("") }
     var selectedRow by remember { mutableStateOf<CertificateRow?>(null) }
+    var previewRow by remember { mutableStateOf<CertificateRow?>(null) }
+
+    previewRow?.let { row ->
+        BackHandler { previewRow = null }
+        CertificateFullScreenScreen(
+            data = CertificateTemplateData(
+                certificateId = row.certificateId,
+                studentId = row.studentId,
+                studentName = row.studentName,
+                courseName = row.courseName,
+                courseDuration = row.courseDuration,
+                completionDate = row.issueDate,
+                issueDate = row.issueDate
+            ),
+            onBack = { previewRow = null }
+        )
+        return
+    }
 
     val certificates = viewModel?.certificates ?: emptyList()
     val students = viewModel?.students ?: MockData.students
@@ -185,7 +206,11 @@ fun CertificateScreen(viewModel: CertificateViewModel? = null, onBack: () -> Uni
             courseName = row.courseName,
             issueDate = row.issueDate,
             createdBy = row.createdBy,
-            onDismiss = { selectedRow = null }
+            onDismiss = { selectedRow = null },
+            onViewPreview = {
+                selectedRow = null
+                previewRow = row
+            }
         )
     }
 }

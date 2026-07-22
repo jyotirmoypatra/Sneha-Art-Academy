@@ -35,9 +35,16 @@ class CertificateViewModel(
             isLoading = true
             errorMessage = null
             try {
-                certificates = repository.getCertificates()
-                students = repository.getStudents()
-                courses = repository.getCourses()
+                // Fetch into locals first and assign all three state vars back-to-back once
+                // everything has arrived — assigning each as it resolves would recompose the
+                // certificate list with some fields still stale/empty ("Unknown Student" etc.)
+                // in between awaits.
+                val fetchedCertificates = repository.getCertificates()
+                val fetchedStudents = repository.getStudents()
+                val fetchedCourses = repository.getCourses()
+                certificates = fetchedCertificates
+                students = fetchedStudents
+                courses = fetchedCourses
             } catch (e: Exception) {
                 errorMessage = e.localizedMessage ?: "Couldn't load certificates."
             }
