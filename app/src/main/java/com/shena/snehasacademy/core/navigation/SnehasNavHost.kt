@@ -24,7 +24,9 @@ import com.shena.snehasacademy.presentation.enrollments.EnrollmentDetailsScreen
 import com.shena.snehasacademy.presentation.enrollments.EnrollmentScreen
 import com.shena.snehasacademy.presentation.fees.FeeManagementScreen
 import com.shena.snehasacademy.presentation.fees.PaymentHistoryScreen
+import com.shena.snehasacademy.presentation.fees.StudentFeesScreen
 import com.shena.snehasacademy.presentation.students.AddStudentScreen
+import com.shena.snehasacademy.presentation.students.StudentCoursesScreen
 import com.shena.snehasacademy.presentation.students.StudentDetailsScreen
 import com.shena.snehasacademy.presentation.students.StudentListScreen
 import com.shena.snehasacademy.presentation.students.StudentProfileScreen
@@ -90,6 +92,8 @@ fun SnehasNavHost() {
                 onNavigate = { route ->
                     when (route) {
                         Route.Settings -> navController.navigate(Route.Settings.createRoute(studentId))
+                        Route.StudentCourses -> navController.navigate(Route.StudentCourses.createRoute(studentId))
+                        Route.StudentFees -> navController.navigate(Route.StudentFees.createRoute(studentId))
                         else -> navController.navigate(route.path)
                     }
                 },
@@ -135,6 +139,16 @@ fun SnehasNavHost() {
         }
         composable(Route.AddCourse.path) {
             AddCourseScreen(viewModel = viewModel(), onBack = { navController.popBackStack() })
+        }
+        composable(
+            Route.StudentCourses.path,
+            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            StudentCoursesScreen(
+                studentId = backStackEntry.arguments?.getString("studentId").orEmpty(),
+                viewModel = viewModel(),
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(
             Route.CourseDetails.path,
@@ -194,6 +208,35 @@ fun SnehasNavHost() {
                 studentId = backStackEntry.arguments?.getString("studentId").orEmpty(),
                 enrollmentId = backStackEntry.arguments?.getString("enrollmentId").orEmpty(),
                 viewModel = viewModel(),
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            Route.StudentFees.path,
+            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val studentId = backStackEntry.arguments?.getString("studentId").orEmpty()
+            StudentFeesScreen(
+                studentId = studentId,
+                viewModel = viewModel(),
+                onOpenHistory = { id, enrollmentId ->
+                    navController.navigate(Route.StudentPaymentHistory.createRoute(id, enrollmentId))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            Route.StudentPaymentHistory.path,
+            arguments = listOf(
+                navArgument("studentId") { type = NavType.StringType },
+                navArgument("enrollmentId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            PaymentHistoryScreen(
+                studentId = backStackEntry.arguments?.getString("studentId").orEmpty(),
+                enrollmentId = backStackEntry.arguments?.getString("enrollmentId").orEmpty(),
+                viewModel = viewModel(),
+                readOnly = true,
                 onBack = { navController.popBackStack() }
             )
         }

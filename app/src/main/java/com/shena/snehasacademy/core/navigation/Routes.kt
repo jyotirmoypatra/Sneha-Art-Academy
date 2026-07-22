@@ -16,6 +16,9 @@ sealed class Route(val path: String) {
     }
     data object Courses : Route("courses")
     data object AddCourse : Route("add_course")
+    data object StudentCourses : Route("student_courses/{studentId}") {
+        fun createRoute(studentId: String) = "student_courses/$studentId"
+    }
     data object CourseDetails : Route("course_details/{courseId}") {
         fun createRoute(courseId: String) = "course_details/$courseId"
     }
@@ -26,8 +29,14 @@ sealed class Route(val path: String) {
     }
     data object Attendance : Route("attendance")
     data object Fees : Route("fees")
+    data object StudentFees : Route("student_fees/{studentId}") {
+        fun createRoute(studentId: String) = "student_fees/$studentId"
+    }
     data object PaymentHistory : Route("payment_history/{studentId}/{enrollmentId}") {
         fun createRoute(studentId: String, enrollmentId: String) = "payment_history/$studentId/$enrollmentId"
+    }
+    data object StudentPaymentHistory : Route("student_payment_history/{studentId}/{enrollmentId}") {
+        fun createRoute(studentId: String, enrollmentId: String) = "student_payment_history/$studentId/$enrollmentId"
     }
     data object Certificates : Route("certificates")
     data object Settings : Route("settings/{studentId}") {

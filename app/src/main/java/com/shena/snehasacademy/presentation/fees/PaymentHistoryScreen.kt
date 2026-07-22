@@ -74,6 +74,7 @@ fun PaymentHistoryScreen(
     studentId: String,
     enrollmentId: String,
     viewModel: EnrollmentViewModel? = null,
+    readOnly: Boolean = false,
     onBack: () -> Unit
 ) {
     var loadedStudent by remember(studentId) { mutableStateOf<Student?>(null) }
@@ -89,7 +90,13 @@ fun PaymentHistoryScreen(
 
     if (viewModel != null && isLoadingStudent && loadedStudent == null) {
         Scaffold(
-            topBar = { SubtitledHeader(title = "Payment History", subtitle = "View and manage fee payments", onBack = onBack) }
+            topBar = {
+                SubtitledHeader(
+                    title = "Payment History",
+                    subtitle = if (readOnly) "View your fee payments" else "View and manage fee payments",
+                    onBack = onBack
+                )
+            }
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { LoadingView() }
         }
@@ -118,7 +125,13 @@ fun PaymentHistoryScreen(
     }
 
     Scaffold(
-        topBar = { SubtitledHeader(title = "Payment History", subtitle = "View and manage fee payments", onBack = onBack) }
+        topBar = {
+            SubtitledHeader(
+                title = "Payment History",
+                subtitle = if (readOnly) "View your fee payments" else "View and manage fee payments",
+                onBack = onBack
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -171,11 +184,13 @@ fun PaymentHistoryScreen(
                 }
             }
 
-            PrimaryButton("Add Payment", { showAddPayment = true }, Modifier.padding(bottom = 24.dp), height = 40.dp)
+            if (!readOnly) {
+                PrimaryButton("Add Payment", { showAddPayment = true }, Modifier.padding(bottom = 24.dp), height = 40.dp)
+            }
         }
     }
 
-    if (showAddPayment) {
+    if (!readOnly && showAddPayment) {
         AddPaymentSheet(
             maxAmount = due,
             isSaving = viewModel?.isSavingPayment == true,

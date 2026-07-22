@@ -65,8 +65,8 @@ class StudentDashboardViewModel(
 
     val menu = listOf(
         Route.Settings to "My Profile",
-        Route.Courses to "My Courses",
-        Route.Fees to "Fee Status",
+        Route.StudentCourses to "My Courses",
+        Route.StudentFees to "Fee Status",
         Route.Certificates to "Certificates"
     )
 
