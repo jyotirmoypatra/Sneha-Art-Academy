@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -120,6 +121,13 @@ private fun StudentCourseCard(enrollment: CourseEnrollment) {
             }
             StudentCourseMetaRow(Icons.Rounded.Star, "Status") { StatusBadge(enrollment.status) }
             StudentCourseMetaRow(Icons.Rounded.Payments, "Fee Status") { StatusBadge(paymentStatus) }
+            StudentCourseMetaRow(Icons.Rounded.WorkspacePremium, "Certificate Status") {
+                if (enrollment.certificateId.isNotBlank()) {
+                    StatusBadge("Issued")
+                } else {
+                    Text("Not Generated", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }

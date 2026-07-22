@@ -389,11 +389,14 @@ fun CreateEnrollmentScreen(viewModel: EnrollmentViewModel? = null, onBack: () ->
     val selectedStudent = remember(selectedStudentText, students) {
         students.find { "${it.name} (${it.id})" == selectedStudentText }
     }
-    val enrolledCourseNames = remember(selectedStudent) {
-        selectedStudent?.enrollments?.map { it.courseName }?.toSet() ?: emptySet()
+    val enrolledCourseIds = remember(selectedStudent, allCourses) {
+        selectedStudent?.enrollments
+            ?.map { it.courseId.ifBlank { allCourses.find { course -> course.title == it.courseName }?.id.orEmpty() } }
+            ?.toSet()
+            ?: emptySet()
     }
-    val courses = remember(allCourses, enrolledCourseNames) {
-        allCourses.filter { it.title !in enrolledCourseNames }
+    val courses = remember(allCourses, enrolledCourseIds) {
+        allCourses.filter { it.id !in enrolledCourseIds }
     }
     val courseOptions = remember(courses) { courses.map { it.title } }
 

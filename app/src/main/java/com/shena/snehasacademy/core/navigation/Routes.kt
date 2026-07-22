@@ -39,6 +39,9 @@ sealed class Route(val path: String) {
         fun createRoute(studentId: String, enrollmentId: String) = "student_payment_history/$studentId/$enrollmentId"
     }
     data object Certificates : Route("certificates")
+    data object StudentCertificates : Route("student_certificates/{studentId}") {
+        fun createRoute(studentId: String) = "student_certificates/$studentId"
+    }
     data object Settings : Route("settings/{studentId}") {
         fun createRoute(studentId: String) = "settings/$studentId"
     }

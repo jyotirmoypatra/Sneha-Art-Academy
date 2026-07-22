@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shena.snehasacademy.core.navigation.Route
 import com.shena.snehasacademy.data.repository.FirestoreAcademyRepository
+import com.shena.snehasacademy.domain.model.Certificate
 import com.shena.snehasacademy.domain.model.Student
 import com.shena.snehasacademy.domain.repository.AcademyRepository
 import kotlinx.coroutines.launch
@@ -67,7 +68,7 @@ class StudentDashboardViewModel(
         Route.Settings to "My Profile",
         Route.StudentCourses to "My Courses",
         Route.StudentFees to "Fee Status",
-        Route.Certificates to "Certificates"
+        Route.StudentCertificates to "My Certificates"
     )
 
     fun loadStudent(studentId: String) {
@@ -81,4 +82,11 @@ class StudentDashboardViewModel(
             isLoading = false
         }
     }
+
+    suspend fun getCertificate(enrollmentId: String): Certificate? =
+        try {
+            repository.getCertificate(enrollmentId)
+        } catch (e: Exception) {
+            null
+        }
 }

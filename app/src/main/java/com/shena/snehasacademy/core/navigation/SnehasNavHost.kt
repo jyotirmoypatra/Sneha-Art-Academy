@@ -26,6 +26,7 @@ import com.shena.snehasacademy.presentation.fees.FeeManagementScreen
 import com.shena.snehasacademy.presentation.fees.PaymentHistoryScreen
 import com.shena.snehasacademy.presentation.fees.StudentFeesScreen
 import com.shena.snehasacademy.presentation.students.AddStudentScreen
+import com.shena.snehasacademy.presentation.students.StudentCertificatesScreen
 import com.shena.snehasacademy.presentation.students.StudentCoursesScreen
 import com.shena.snehasacademy.presentation.students.StudentDetailsScreen
 import com.shena.snehasacademy.presentation.students.StudentListScreen
@@ -94,6 +95,7 @@ fun SnehasNavHost() {
                         Route.Settings -> navController.navigate(Route.Settings.createRoute(studentId))
                         Route.StudentCourses -> navController.navigate(Route.StudentCourses.createRoute(studentId))
                         Route.StudentFees -> navController.navigate(Route.StudentFees.createRoute(studentId))
+                        Route.StudentCertificates -> navController.navigate(Route.StudentCertificates.createRoute(studentId))
                         else -> navController.navigate(route.path)
                     }
                 },
@@ -242,6 +244,16 @@ fun SnehasNavHost() {
         }
         composable(Route.Certificates.path) {
             CertificateScreen(viewModel = viewModel(), onBack = { navController.popBackStack() })
+        }
+        composable(
+            Route.StudentCertificates.path,
+            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            StudentCertificatesScreen(
+                studentId = backStackEntry.arguments?.getString("studentId").orEmpty(),
+                viewModel = viewModel(),
+                onBack = { navController.popBackStack() }
+            )
         }
         composable(
             Route.Settings.path,
