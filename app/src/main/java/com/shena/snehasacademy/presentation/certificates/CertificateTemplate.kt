@@ -37,7 +37,8 @@ data class CertificateTemplateData(
 )
 
 private val CertDarkBrown = Color(0xFF3B2113)
-private val CertOnRibbon = Color(0xFFFBF1DC)
+//private val CertOnRibbon = Color(0xFFFBF1DC)
+private val CertOnRibbon = Color(0xFFFFEDBF)
 private val GreatVibes = FontFamily(Font(R.font.great_vibes))
 
 /** cert_background.png's real pixel size — everything (border, seal, logo, labels) is baked in; we only overlay values. */
@@ -94,29 +95,30 @@ private fun CertificateContent(data: CertificateTemplateData) {
         // NOTE: positions are fractions of the image (0,0 = top-left, 1,1 = bottom-right),
         // eyeballed against cert_background.png's blank spots. Nudge the fraction pairs below
         // if a value needs to shift.
-        CertOverlay(data.certificateId, xFraction = 0.120f, yFraction = 0.318f, fontSize = 15.sp, boxWidth = 220.dp)
-        CertOverlay(data.studentId, xFraction = 0.880f, yFraction = 0.318f, fontSize = 15.sp, boxWidth = 220.dp)
+        CertOverlay(data.certificateId, xFraction = 0.124f, yFraction = 0.313f, fontSize = 15.sp, boxWidth = 220.dp)
+        CertOverlay(data.studentId, xFraction = 0.863f, yFraction = 0.313f, fontSize = 15.sp, boxWidth = 220.dp)
         CertOverlay(
             data.studentName,
             xFraction = 0.5f,
-            yFraction = 0.550f,
-            fontSize = 52.sp,
+            yFraction = 0.587f,
+            fontSize = 54.sp,
             fontFamily = GreatVibes,
-            fontWeight = FontWeight.Normal,
-            boxWidth = 800.dp
+            fontWeight = FontWeight.Medium,
+            boxWidth = 800.dp,
+            boxHeight = 90.dp
         )
         CertOverlay(
             data.courseName.uppercase(),
             xFraction = 0.5f,
-            yFraction = 0.693f,
-            fontSize = 19.sp,
+            yFraction = 0.705f,
+            fontSize = 20.sp,
             letterSpacing = 1.sp,
             color = CertOnRibbon,
             boxWidth = 600.dp
         )
-        CertOverlay(data.courseDuration, xFraction = 0.135f, yFraction = 0.945f, fontSize = 14.sp, boxWidth = 200.dp)
-        CertOverlay(data.completionDate, xFraction = 0.315f, yFraction = 0.945f, fontSize = 14.sp, boxWidth = 200.dp)
-        CertOverlay(data.issueDate, xFraction = 0.675f, yFraction = 0.945f, fontSize = 14.sp, boxWidth = 200.dp)
+        CertOverlay(data.courseDuration, xFraction = 0.107f, yFraction = 0.955f, fontSize = 14.sp, boxWidth = 200.dp)
+        CertOverlay(data.completionDate, xFraction = 0.309f, yFraction = 0.955f, fontSize = 14.sp, boxWidth = 200.dp)
+        CertOverlay(data.issueDate, xFraction = 0.668f, yFraction = 0.955f, fontSize = 14.sp, boxWidth = 200.dp)
     }
 }
 
@@ -130,13 +132,15 @@ private fun androidx.compose.foundation.layout.BoxScope.CertOverlay(
     fontFamily: FontFamily = FontFamily.Serif,
     fontWeight: FontWeight = FontWeight.Bold,
     color: Color = CertDarkBrown,
-    letterSpacing: TextUnit = TextUnit.Unspecified
+    letterSpacing: TextUnit = TextUnit.Unspecified,
+    // Script fonts (Great Vibes) have tall swashes/descenders that a tight 40dp box clips off.
+    boxHeight: androidx.compose.ui.unit.Dp = 40.dp
 ) {
     Text(
         text.ifBlank { "—" },
         modifier = Modifier
             .align(BiasAlignment(bias(xFraction), bias(yFraction)))
-            .size(boxWidth, 40.dp),
+            .size(boxWidth, boxHeight),
         fontFamily = fontFamily,
         fontWeight = fontWeight,
         fontSize = fontSize,
